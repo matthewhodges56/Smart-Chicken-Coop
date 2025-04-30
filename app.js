@@ -119,28 +119,111 @@ document.getElementById('btnCloseEverything').addEventListener('click', function
 });
 
 // "Create Account" button fades out registration and clears page, sets title
-btnCreateAccount.addEventListener('click', () => {
-    const divRegistration = document.getElementById('divRegistration');
-    const divLogin = document.getElementById('divLogin');
+btnCreateAccount.addEventListener('click', async () => {
+    const email = document.getElementById('txtEmail').value.trim();
+    const password = document.getElementById('txtPassword').value.trim();
+    const firstName = document.getElementById('txtFirstName').value.trim();
+    const lastName = document.getElementById('txtLastName').value.trim();
+    const address1 = document.getElementById('txtAddress1').value.trim();
+    const address2 = document.getElementById('txtAddress2').value.trim();
+    const city = document.getElementById('txtCity').value.trim();
+    const state = document.getElementById('txtState').value;
+    const zip = document.getElementById('txtZip').value.trim();
+    const phone = document.getElementById('telPhone').value.trim();
+    const coopID = '31C0MOYI'; // Your CoopID
 
-    // Hide the registration form
-    divRegistration.style.transition = 'opacity 0.5s ease';
-    divRegistration.style.opacity = 0;
+    // Initialize an array to store errors
+    const errors = [];
 
-    setTimeout(() => {
-        divRegistration.style.display = 'none';
+    // Validate required fields
+    if (!email) errors.push('Email is required.');
+    if (!password) errors.push('Password is required.');
+    if (!firstName) errors.push('First Name is required.');
+    if (!lastName) errors.push('Last Name is required.');
+    if (!address1) errors.push('Street Address 1 is required.');
+    if (!city) errors.push('City is required.');
+    if (!state) errors.push('State is required.');
+    if (!zip) errors.push('ZIP is required.');
+    if (!phone) errors.push('Phone number is required.');
 
-        // Show the login form
-        divLogin.style.display = 'flex';
-        divLogin.style.opacity = 0;
+    // If there are errors, display them using SweetAlert2
+    if (errors.length > 0) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Validation Errors',
+            html: `<ul>${errors.map(error => `<li>${error}</li>`).join('')}</ul>`,
+        });
+        return;
+    }
 
-        setTimeout(() => {
-            divLogin.style.transition = 'opacity 0.5s ease';
-            divLogin.style.opacity = 1;
-        }, 10);
-    }, 500);
+    try {
+        // Make a POST request to the coop.php endpoint to create a new user
+        const response = await fetch('https://simplecoop.swollenhippo.com/coop.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                CoopID: coopID,
+                Email: email,
+                Password: password,
+                FirstName: firstName,
+                LastName: lastName,
+                Street1: address1,
+                Street2: address2,
+                City: city,
+                State: state,
+                ZIP: zip,
+                Phone: phone,
+            }),
+        });
 
-    document.title = "Smart Chicken Coop | Login";
+        const data = await response.json();
+
+        if (data.Outcome === 'Success') {
+            // Show success message
+            Swal.fire({
+                icon: 'success',
+                title: 'Account Created',
+                text: 'Your account has been successfully created. Please log in.',
+            }).then(() => {
+                // Hide the registration form and show the login form
+                const divRegistration = document.getElementById('divRegistration');
+                const divLogin = document.getElementById('divLogin');
+
+                divRegistration.style.transition = 'opacity 0.5s ease';
+                divRegistration.style.opacity = 0;
+
+                setTimeout(() => {
+                    divRegistration.style.display = 'none';
+                    divLogin.style.display = 'flex';
+                    divLogin.style.opacity = 0;
+
+                    setTimeout(() => {
+                        divLogin.style.transition = 'opacity 0.5s ease';
+                        divLogin.style.opacity = 1;
+                    }, 10);
+                }, 500);
+
+                document.title = "Smart Chicken Coop | Login";
+            });
+        } else {
+            // Show error message if account creation fails
+            Swal.fire({
+                icon: 'error',
+                title: 'Account Creation Failed',
+                text: data.Outcome || 'An error occurred while creating your account. Please try again.',
+            });
+        }
+    } catch (error) {
+        // Handle network or server errors
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'An error occurred while trying to create your account. Please try again later.',
+        });
+        console.error('Account creation error:', error);
+    }
 });
 
 // Validation for Registration Form
