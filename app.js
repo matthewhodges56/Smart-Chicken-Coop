@@ -144,6 +144,106 @@ btnCreateAccount.addEventListener('click', () => {
 });
 
 // Validation for Registration Form
+document.getElementById('btnCreateAccount').addEventListener('click', () => {
+    const strEmail = document.getElementById('txtEmail').value.trim();
+    const strPassword = document.getElementById('txtPassword').value.trim();
+    const strFirstName = document.getElementById('txtFirstName').value.trim();
+    const strLastName = document.getElementById('txtLastName').value.trim();
+    const strStreetAddress1 = document.getElementById('txtStreetAddress1').value.trim();
+    const strStreetAddress2 = document.getElementById('txtStreetAddress2').value.trim();
+    const strCity = document.getElementById('txtCity').value.trim();
+    const strState = document.getElementById('selState').value.trim();
+    const strZipCode = document.getElementById('txtZipCode').value.trim();
+    const strPhoneNumber = document.getElementById('txtPhone').value.trim();
+    const strCoopID = document.getElementById('txtCoopRegistrationID').value.trim();
+
+    // Initialize an array to store errors
+    const errors = [];
+
+    // check email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (strEmail && !emailRegex.test(strEmail)) {
+        errors.push('Invalid email format.');
+    }
+
+    // Check password format (at least 8 characters, one uppercase letter, one lowercase letter, one number, and one special character)
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    if (strPassword && !passwordRegex.test(strPassword)) {
+        errors.push('Password must be at least 8 characters long and include one uppercase letter, one lowercase letter, one number, and one special character.');
+    }
+
+    // Check if first name is empty
+    if (!strFirstName) {
+        errors.push('First name is required.');
+    }
+
+    // Check if last name is empty
+    if (!strLastName) {
+        errors.push('Last name is required.');
+    }
+
+    // Check if street address is empty
+    if (!strStreetAddress1) {
+        errors.push('Street address is required.');
+    }
+
+    // Check if street address 2 is empty
+    if (!strStreetAddress2) {
+        errors.push('Street address 2 is required.');
+    }
+
+    // Check if city is empty
+    if (!strCity) {
+        errors.push('City is required.');
+    }
+
+    // Check if state is empty
+    if (!strState) {
+        errors.push('State is required.');
+    }
+
+    // Check zip code format (5 digits)
+    const zipCodeRegex = /^\d{5}$/;
+    if (strZipCode && !zipCodeRegex.test(strZipCode)) {
+        errors.push('Zip code must be 5 digits.');
+    }
+
+    // Check phone number format (10 digits)
+    const phoneNumberRegex = /^\d{10}$/;
+    if (strPhoneNumber && !phoneNumberRegex.test(strPhoneNumber)) {
+        errors.push('Phone number must be 10 digits.');
+    }
+
+    // Check if coop ID is empty
+    if (!strCoopID) {
+        errors.push('Coop ID is required.');
+    }
+
+    // If there are errors, display them using SweetAlert2
+    if (errors.length > 0) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Validation Errors',
+            html: `<ul>${errors.map(error => `<li>${error}</li>`).join('')}</ul>`, // Display errors as a list
+        });
+        return;
+    }
+    // Simulate registration success
+    Swal.fire({
+        icon: 'success',
+        title: 'Registration Successful',
+        text: 'Welcome to Smart Chicken Coop!',
+    }).then(() => {
+        // Redirect to login or perform other actions
+        divRegistration.style.opacity = 0;
+        setTimeout(() => {
+            divRegistration.style.display = 'none';
+            divLogin.style.display = 'flex';
+            divLogin.style.opacity = 1;
+        }, 500);
+    });
+    document.title = "Smart Chicken Coop | Login";
+});
 
 
 //Validation for Login
