@@ -130,7 +130,7 @@ btnCreateAccount.addEventListener('click', async () => {
     const state = document.getElementById('txtState').value;
     const zip = document.getElementById('txtZip').value.trim();
     const phone = document.getElementById('telPhone').value.trim();
-    const coopID = '31C0MOYI'; // Your CoopID
+    const coopID = '31C0MOYI'; // Use the predefined CoopID
 
     // Initialize an array to store errors
     const errors = [];
@@ -157,8 +157,7 @@ btnCreateAccount.addEventListener('click', async () => {
     }
 
     try {
-// Make a POST request to the coop.php endpoint to create a new user
-// Make a POST request to the coop.php endpoint to create a new user
+        // Make a POST request to the coop.php endpoint to create a new user
         const response = await fetch('https://simplecoop.swollenhippo.com/coop.php', {
             method: 'POST',
             headers: {
@@ -210,7 +209,7 @@ btnCreateAccount.addEventListener('click', async () => {
                 document.title = "Smart Chicken Coop | Login";
             });
         } else {
-// Show error message if account creation fails
+            // Show error message if account creation fails
             Swal.fire({
                 icon: 'error',
                 title: 'Account Creation Failed',
@@ -218,7 +217,7 @@ btnCreateAccount.addEventListener('click', async () => {
             });
         }
     } catch (error) {
-// Handle network or server errors
+        // Handle network or server errors
         Swal.fire({
             icon: 'error',
             title: 'Error',
