@@ -2,13 +2,11 @@
 const divRegistration = document.getElementById('divRegistration');
 const divLogin = document.getElementById('divLogin');
 const btnCancelRegistration = document.getElementById('btnCancelRegistration');
-const btnCreateAccount = document.getElementById('btnCreateAccount');
 const btnShowLogin = document.getElementById('btnShowLogin');
-
 
 // Drop-down menu fixes
 document.addEventListener('DOMContentLoaded', () => {
-    new Choices('#txtState', {
+    new Choices('#selState', {
       placeholder: false,
       itemSelectText: '',
       searchEnabled: true,
@@ -118,33 +116,10 @@ document.getElementById('btnCloseEverything').addEventListener('click', function
     document.title = "Smart Chicken Coop";
 });
 
-// "Create Account" button fades out registration and clears page, sets title
-btnCreateAccount.addEventListener('click', () => {
-    const divRegistration = document.getElementById('divRegistration');
-    const divLogin = document.getElementById('divLogin');
-
-    // Hide the registration form
-    divRegistration.style.transition = 'opacity 0.5s ease';
-    divRegistration.style.opacity = 0;
-
-    setTimeout(() => {
-        divRegistration.style.display = 'none';
-
-        // Show the login form
-        divLogin.style.display = 'flex';
-        divLogin.style.opacity = 0;
-
-        setTimeout(() => {
-            divLogin.style.transition = 'opacity 0.5s ease';
-            divLogin.style.opacity = 1;
-        }, 10);
-    }, 500);
-
-    document.title = "Smart Chicken Coop | Login";
-});
-
 // Validation for Registration Form
 document.getElementById('btnCreateAccount').addEventListener('click', () => {
+    console.log('Create Account button clicked');
+
     const strEmail = document.getElementById('txtEmail').value.trim();
     const strPassword = document.getElementById('txtPassword').value.trim();
     const strFirstName = document.getElementById('txtFirstName').value.trim();
@@ -154,7 +129,7 @@ document.getElementById('btnCreateAccount').addEventListener('click', () => {
     const strCity = document.getElementById('txtCity').value.trim();
     const strState = document.getElementById('selState').value.trim();
     const strZipCode = document.getElementById('txtZipCode').value.trim();
-    const strPhoneNumber = document.getElementById('txtPhone').value.trim();
+    const strPhoneNumber = document.getElementById('telPhone').value.trim();
     const strCoopID = document.getElementById('txtCoopRegistrationID').value.trim();
 
     // Initialize an array to store errors
@@ -164,12 +139,18 @@ document.getElementById('btnCreateAccount').addEventListener('click', () => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (strEmail && !emailRegex.test(strEmail)) {
         errors.push('Invalid email format.');
+    } // Check if email is empty
+    if (!strEmail) {
+        errors.push('Email is required.');
     }
 
     // Check password format (at least 8 characters, one uppercase letter, one lowercase letter, one number, and one special character)
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
     if (strPassword && !passwordRegex.test(strPassword)) {
         errors.push('Password must be at least 8 characters long and include one uppercase letter, one lowercase letter, one number, and one special character.');
+    } // Check if password is empty
+    if (!strPassword) {
+        errors.push('Password is required.');
     }
 
     // Check if first name is empty
@@ -184,7 +165,7 @@ document.getElementById('btnCreateAccount').addEventListener('click', () => {
 
     // Check if street address is empty
     if (!strStreetAddress1) {
-        errors.push('Street address is required.');
+        errors.push('Street address 1 is required.');
     }
 
     // Check if street address 2 is empty
@@ -223,8 +204,21 @@ document.getElementById('btnCreateAccount').addEventListener('click', () => {
     if (errors.length > 0) {
         Swal.fire({
             icon: 'error',
-            title: 'Validation Errors',
-            html: `<ul>${errors.map(error => `<li>${error}</li>`).join('')}</ul>`, // Display errors as a list
+            title: 'Uh-oh! Something went wrong...',
+            html: `
+                <div style="text-align: center; font-size: 16px; line-height: 1.8;">
+                    <p>Please check the following errors:</p>
+                    ${errors.map(error => `<div>${error}</div>`).join('')}
+                </div>
+            `,
+            showClass: {
+                popup: 'animate__animated animate__heartBeat', // Apply heartBeat animation
+            },
+            backdrop: `
+                rgba(0,0,0,0.4)
+                left top
+                no-repeat
+            `,
         });
         return;
     }
@@ -244,7 +238,6 @@ document.getElementById('btnCreateAccount').addEventListener('click', () => {
     });
     document.title = "Smart Chicken Coop | Login";
 });
-
 
 //Validation for Login
 document.getElementById('btnLogin').addEventListener('click', async () => {
@@ -329,28 +322,4 @@ document.getElementById('btnLogin').addEventListener('click', async () => {
         });
         console.error('Login error:', error);
     }
-});
-
-document.getElementById('btnCreateNewUser').addEventListener('click', () => {
-    const divLogin = document.getElementById('divLogin');
-    const divRegistration = document.getElementById('divRegistration');
-
-    // Hide the login form
-    divLogin.style.transition = 'opacity 0.5s ease';
-    divLogin.style.opacity = 0;
-
-    setTimeout(() => {
-        divLogin.style.display = 'none';
-
-        // Show the registration form
-        divRegistration.style.display = 'flex';
-        divRegistration.style.opacity = 0;
-
-        setTimeout(() => {
-            divRegistration.style.transition = 'opacity 0.5s ease';
-            divRegistration.style.opacity = 1;
-        }, 10);
-    }, 500);
-
-    document.title = "Smart Chicken Coop | Registration";
 });
