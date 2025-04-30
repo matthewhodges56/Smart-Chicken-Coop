@@ -131,3 +131,56 @@ btnCreateAccount.addEventListener('click', () => {
 });
 
 // Validation for Registration Form
+
+
+//Validation for Login
+document.getElementById('btnLogin').addEventListener('click', () => {
+    const email = document.getElementById('txtLoginEmail').value.trim();
+    const password = document.getElementById('txtLoginPassword').value.trim();
+
+    // Initialize an array to store errors
+    const errors = [];
+
+    // Check if email is empty
+    if (!email) {
+        errors.push('Email is required.');
+    }
+
+    // Check if password is empty
+    if (!password) {
+        errors.push('Password is required.');
+    }
+
+    // Check if email format is valid
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (email && !emailRegex.test(email)) {
+        errors.push('Invalid email format.');
+    }
+
+    // If there are errors, display them using SweetAlert2
+    if (errors.length > 0) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Validation Errors',
+            html: `<ul>${errors.map(error => `<li>${error}</li>`).join('')}</ul>`, // Display errors as a list
+        });
+        return;
+    }
+
+    // Simulate login success
+    Swal.fire({
+        icon: 'success',
+        title: 'Login Successful',
+        text: 'Welcome back!',
+    }).then(() => {
+        // Redirect to dashboard or perform other actions
+        document.getElementById('divLogin').style.opacity = 0;
+        setTimeout(() => {
+            document.getElementById('divLogin').style.display = 'none';
+            const divDashboard = document.getElementById('divDashboard');
+            divDashboard.style.display = 'flex';
+            divDashboard.style.opacity = 1;
+        }, 500);
+        document.title = "Smart Chicken Coop | Dashboard";
+    });
+});
