@@ -88,6 +88,22 @@ document.getElementById('btnShowRegistration').addEventListener('click', functio
     document.title = "Smart Chicken Coop | Registration";
 });
 
+// "Show Dashboard" button fades out login and registration, shows dashboard, and sets the title
+document.getElementById('btnShowDashboard').addEventListener('click', function() {
+    // Fade in dashboard 
+    const divDashboard = document.getElementById('divDashboard');
+    divDashboard.style.display = 'flex';
+    divDashboard.style.opacity = 0;
+    setTimeout(() => {
+        divDashboard.style.transition = 'opacity 0.5s ease';
+        divDashboard.style.opacity = 1;
+    }
+    , 10);
+
+    document.title = "Smart Chicken Coop | Dashboard";
+});
+
+
 // "Close Everything" button fades out registration and login divs
 document.getElementById('btnCloseEverything').addEventListener('click', function() {
     divRegistration.style.opacity = 0;
@@ -114,4 +130,4 @@ btnCreateAccount.addEventListener('click', () => {
     document.title = "Smart Chicken Coop | Dashboard";
 });
 
-  
+// Validation for Registration Form
