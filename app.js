@@ -134,7 +134,7 @@ btnCreateAccount.addEventListener('click', () => {
 
 
 //Validation for Login
-document.getElementById('btnLogin').addEventListener('click', () => {
+document.getElementById('btnLogin').addEventListener('click', async () => {
     const email = document.getElementById('txtLoginEmail').value.trim();
     const password = document.getElementById('txtLoginPassword').value.trim();
 
@@ -144,6 +144,12 @@ document.getElementById('btnLogin').addEventListener('click', () => {
     // Check if email is empty
     if (!email) {
         errors.push('Email is required.');
+    } else {
+        // Check if email format is valid
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            errors.push('Invalid email format.');
+        }
     }
 
     // Check if password is empty
@@ -151,38 +157,65 @@ document.getElementById('btnLogin').addEventListener('click', () => {
         errors.push('Password is required.');
     }
 
-    // Check if email format is valid
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (email && !emailRegex.test(email)) {
-        errors.push('Invalid email format.');
-    }
-
     // If there are errors, display them using SweetAlert2
     if (errors.length > 0) {
         Swal.fire({
             icon: 'error',
             title: 'Validation Errors',
-            html: `<ul>${errors.map(error => `<li>${error}</li>`).join('')}</ul>`, // Display errors as a list
+            html: `<ul>${errors.map(error => `<li>${error}</li>`).join('')}</ul>`,
         });
         return;
     }
 
-    // Simulate login success
-    Swal.fire({
-        icon: 'success',
-        title: 'Login Successful',
-        text: 'Welcome back!',
-    }).then(() => {
-        // Redirect to dashboard or perform other actions
-        document.getElementById('divLogin').style.opacity = 0;
-        setTimeout(() => {
-            document.getElementById('divLogin').style.display = 'none';
-            const divDashboard = document.getElementById('divDashboard');
-            divDashboard.style.display = 'flex';
-            divDashboard.style.opacity = 1;
-        }, 500);
-        document.title = "Smart Chicken Coop | Dashboard";
-    });
+    try {
+        // Make a POST request to the sessions.php endpoint
+        const response = await fetch('https://simplecoop.swollenhippo.com/sessions.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ Email: email, Password: password }),
+        });
+
+        const data = await response.json();
+
+        if (data.Outcome === 'Success' && data.SessionID) {
+            // Store the SessionID in localStorage
+            localStorage.setItem('SessionID', data.SessionID);
+
+            // Show success message
+            Swal.fire({
+                icon: 'success',
+                title: 'Login Successful',
+                text: 'Welcome back!',
+            }).then(() => {
+                // Redirect to dashboard or perform other actions
+                document.getElementById('divLogin').style.opacity = 0;
+                setTimeout(() => {
+                    document.getElementById('divLogin').style.display = 'none';
+                    const divDashboard = document.getElementById('divDashboard');
+                    divDashboard.style.display = 'flex';
+                    divDashboard.style.opacity = 1;
+                }, 500);
+                document.title = "Smart Chicken Coop | Dashboard";
+            });
+        } else {
+            // Show error message if login fails
+            Swal.fire({
+                icon: 'error',
+                title: 'Login Failed',
+                text: data.Outcome || 'Invalid email or password. Please try again.',
+            });
+        }
+    } catch (error) {
+        // Handle network or server errors
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'An error occurred while trying to log in. Please try again later.',
+        });
+        console.error('Login error:', error);
+    }
 });
 
 document.getElementById('btnCreateNewUser').addEventListener('click', () => {
