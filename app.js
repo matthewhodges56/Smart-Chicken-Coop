@@ -130,7 +130,7 @@ btnCreateAccount.addEventListener('click', async () => {
     const state = document.getElementById('txtState').value;
     const zip = document.getElementById('txtZip').value.trim();
     const phone = document.getElementById('telPhone').value.trim();
-    const coopID = document.getElementById('txtCoopRegistrationID').value.trim(); // Get CoopID from the form
+    const coopID = '31C0MOYI'; // Hardcoded CoopID
 
     // Initialize an array to store errors
     const errors = [];
@@ -145,7 +145,6 @@ btnCreateAccount.addEventListener('click', async () => {
     if (!state) errors.push('State is required.');
     if (!zip) errors.push('ZIP is required.');
     if (!phone) errors.push('Phone number is required.');
-    if (!coopID) errors.push('CoopID is required.');
 
     // If there are errors, display them using SweetAlert2
     if (errors.length > 0) {
