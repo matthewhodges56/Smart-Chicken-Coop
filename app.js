@@ -184,3 +184,27 @@ document.getElementById('btnLogin').addEventListener('click', () => {
         document.title = "Smart Chicken Coop | Dashboard";
     });
 });
+
+document.getElementById('btnCreateNewUser').addEventListener('click', () => {
+    const divLogin = document.getElementById('divLogin');
+    const divRegistration = document.getElementById('divRegistration');
+
+    // Hide the login form
+    divLogin.style.transition = 'opacity 0.5s ease';
+    divLogin.style.opacity = 0;
+
+    setTimeout(() => {
+        divLogin.style.display = 'none';
+
+        // Show the registration form
+        divRegistration.style.display = 'flex';
+        divRegistration.style.opacity = 0;
+
+        setTimeout(() => {
+            divRegistration.style.transition = 'opacity 0.5s ease';
+            divRegistration.style.opacity = 1;
+        }, 10);
+    }, 500);
+
+    document.title = "Smart Chicken Coop | Registration";
+});
