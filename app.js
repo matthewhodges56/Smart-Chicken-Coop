@@ -4,13 +4,169 @@ const divLogin = document.getElementById('divLogin');
 const btnCancelRegistration = document.getElementById('btnCancelRegistration');
 const btnShowLogin = document.getElementById('btnShowLogin');
 
-// Drop-down menu fixes
 document.addEventListener('DOMContentLoaded', () => {
-    new Choices('#selState', {
-      placeholder: false,
-      itemSelectText: '',
-      searchEnabled: true,
+    $('#selState').select2( {
+        theme: "bootstrap-5",
+        width: $( this ).data( 'width' ) ? $( this ).data( 'width' ) : $( this ).hasClass( 'w-100' ) ? '100%' : 'style',
+        placeholder: $( this ).data( 'placeholder' ),
+        dropdownParent: $( '#selState' ).parent(),
+        allowClear: false,
+        minimumResultsForSearch: Infinity, // Disable search box
+    } );
+
+    // Check if the select element exists
+    const stateSelect = $('#selState');
+    if (stateSelect.length) {
+        // Add validation for Select2
+        stateSelect.on('change', function () {
+            const value = $(this).val();
+            if (value) {
+                $(this).next('.select2-container').find('.select2-selection').addClass('is-valid').removeClass('is-invalid');
+            } else {
+                $(this).next('.select2-container').find('.select2-selection').addClass('is-invalid').removeClass('is-valid');
+            }
+        });
+    }
+
+    // Email validation
+    const emailInput = document.getElementById('txtEmail');
+    if (emailInput) {
+        const emailFeedback = document.createElement('div');
+        emailFeedback.className = 'invalid-feedback'; // Bootstrap class for invalid feedback
+        emailFeedback.textContent = 'Please enter a valid email address.';
+        emailInput.parentNode.appendChild(emailFeedback); // Add feedback below the input
+
+        emailInput.addEventListener('input', function () {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (emailRegex.test(this.value)) {
+                this.classList.add('is-valid');
+                this.classList.remove('is-invalid');
+                emailFeedback.style.display = 'none'; // Hide feedback if valid
+            } else {
+                this.classList.add('is-invalid');
+                this.classList.remove('is-valid');
+                emailFeedback.style.display = 'block'; // Show feedback if invalid
+            }
+        });
+    }
+
+    // Password validation
+    const passwordInput = document.getElementById('txtPassword');
+    if (passwordInput) {
+        const passwordFeedback = document.createElement('div');
+        passwordFeedback.className = 'invalid-feedback'; // Bootstrap class for invalid feedback
+        passwordFeedback.textContent = 'Password must be at least 8 characters long, include one uppercase letter, one number, and one special character.';
+        passwordInput.parentNode.appendChild(passwordFeedback); // Add feedback below the input
+
+        passwordInput.addEventListener('input', function () {
+            const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+            if (passwordRegex.test(this.value)) {
+                this.classList.add('is-valid');
+                this.classList.remove('is-invalid');
+                passwordFeedback.style.display = 'none'; // Hide feedback if valid
+            } else {
+                this.classList.add('is-invalid');
+                this.classList.remove('is-valid');
+                passwordFeedback.style.display = 'block'; // Show feedback if invalid
+            }
+        });
+    }
+
+    // Validation for required fields
+    const requiredFields = [
+        { id: 'txtFirstName', feedback: 'First name is required.' },
+        { id: 'txtLastName', feedback: 'Last name is required.' },
+        { id: 'txtStreetAddress1', feedback: 'Street Address 1 is required.' },
+        { id: 'txtCity', feedback: 'City is required.' },
+        { id: 'txtCoopRegistrationID', feedback: 'Coop Registration ID is required.' }
+    ];
+
+    requiredFields.forEach(field => {
+        const input = document.getElementById(field.id);
+        if (input) {
+            const feedback = document.createElement('div');
+            feedback.className = 'invalid-feedback'; // Bootstrap class for invalid feedback
+            feedback.textContent = field.feedback;
+            input.parentNode.appendChild(feedback); // Add feedback below the input
+
+            input.addEventListener('input', function () {
+                if (this.value.length > 0) { // Check if the input length is greater than 0
+                    this.classList.add('is-valid');
+                    this.classList.remove('is-invalid');
+                    feedback.style.display = 'none'; // Hide feedback if valid
+                } else {
+                    this.classList.add('is-invalid');
+                    this.classList.remove('is-valid');
+                    feedback.style.display = 'block'; // Show feedback if invalid
+                }
+            });
+        }
     });
+
+    // Optional validation for Street Address 2
+    const streetAddress2Input = document.getElementById('txtStreetAddress2');
+    if (streetAddress2Input) {
+        const feedback = document.createElement('div');
+        feedback.className = 'invalid-feedback'; // Bootstrap class for invalid feedback
+        feedback.textContent = 'Street Address 2 is invalid.';
+        streetAddress2Input.parentNode.appendChild(feedback); // Add feedback below the input
+
+        streetAddress2Input.addEventListener('input', function () {
+            if (this.value.length > 0) { // If the field is filled out
+                this.classList.add('is-valid');
+                this.classList.remove('is-invalid');
+                feedback.style.display = 'none'; // Hide feedback if valid
+            } else {
+                this.classList.remove('is-valid'); // Remove valid class if empty
+                this.classList.remove('is-invalid'); // Remove invalid class if empty
+                feedback.style.display = 'none'; // Hide feedback if empty
+            }
+        });
+    }
+
+    // ZIP Code validation
+    const zipInput = document.getElementById('txtZipCode');
+    if (zipInput) {
+        const zipFeedback = document.createElement('div');
+        zipFeedback.className = 'invalid-feedback';
+        zipFeedback.textContent = 'ZIP code must be exactly 5 digits.';
+        zipInput.parentNode.appendChild(zipFeedback);
+
+        zipInput.addEventListener('input', function () {
+            const zipRegex = /^\d{5}$/; // ZIP code must be 5 digits
+            if (zipRegex.test(this.value)) {
+                this.classList.add('is-valid');
+                this.classList.remove('is-invalid');
+                zipFeedback.style.display = 'none';
+            } else {
+                this.classList.add('is-invalid');
+                this.classList.remove('is-valid');
+                zipFeedback.style.display = 'block';
+            }
+        });
+    }
+
+    // Phone number validation
+    const phoneInput = document.getElementById('telPhone');
+    if (phoneInput) {
+        const phoneFeedback = document.createElement('div');
+        phoneFeedback.className = 'invalid-feedback';
+        phoneFeedback.textContent = 'Phone number must be exactly 10 digits.';
+        phoneInput.parentNode.appendChild(phoneFeedback);
+
+        phoneInput.addEventListener('input', function () {
+            const phoneRegex = /^\d{10}$/; // Phone number must be 10 digits
+            if (phoneRegex.test(this.value)) {
+                this.classList.add('is-valid');
+                this.classList.remove('is-invalid');
+                phoneFeedback.style.display = 'none';
+            } else {
+                this.classList.add('is-invalid');
+                this.classList.remove('is-valid');
+                phoneFeedback.style.display = 'block';
+            }
+        });
+    }
 });
 
 // "Cancel Registration" button fades div out on click, fades in login form, and sets title
@@ -118,125 +274,55 @@ document.getElementById('btnCloseEverything').addEventListener('click', function
 
 // Validation for Registration Form
 document.getElementById('btnCreateAccount').addEventListener('click', () => {
-    console.log('Create Account button clicked');
+    const formFields = [
+        'txtFirstName',
+        'txtLastName',
+        'txtEmail',
+        'txtPassword',
+        'txtStreetAddress1',
+        'txtCity',
+        'txtZipCode',
+        'telPhone',
+        'txtCoopRegistrationID'
+    ];
 
-    const strEmail = document.getElementById('txtEmail').value.trim();
-    const strPassword = document.getElementById('txtPassword').value.trim();
-    const strFirstName = document.getElementById('txtFirstName').value.trim();
-    const strLastName = document.getElementById('txtLastName').value.trim();
-    const strStreetAddress1 = document.getElementById('txtStreetAddress1').value.trim();
-    const strStreetAddress2 = document.getElementById('txtStreetAddress2').value.trim();
-    const strCity = document.getElementById('txtCity').value.trim();
-    const strState = document.getElementById('selState').value.trim();
-    const strZipCode = document.getElementById('txtZipCode').value.trim();
-    const strPhoneNumber = document.getElementById('telPhone').value.trim();
-    const strCoopID = document.getElementById('txtCoopRegistrationID').value.trim();
+    let allValid = true;
 
-    // Initialize an array to store errors
-    const errors = [];
-
-    // check email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (strEmail && !emailRegex.test(strEmail)) {
-        errors.push('Invalid email format.');
-    } // Check if email is empty
-    if (!strEmail) {
-        errors.push('Email is required.');
-    }
-
-    // Check password format (at least 8 characters, one uppercase letter, one lowercase letter, one number, and one special character)
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
-    if (strPassword && !passwordRegex.test(strPassword)) {
-        errors.push('Password must be at least 8 characters long and include one uppercase letter, one lowercase letter, one number, and one special character.');
-    } // Check if password is empty
-    if (!strPassword) {
-        errors.push('Password is required.');
-    }
-
-    // Check if first name is empty
-    if (!strFirstName) {
-        errors.push('First name is required.');
-    }
-
-    // Check if last name is empty
-    if (!strLastName) {
-        errors.push('Last name is required.');
-    }
-
-    // Check if street address is empty
-    if (!strStreetAddress1) {
-        errors.push('Street address 1 is required.');
-    }
-
-    // Check if street address 2 is empty
-    if (!strStreetAddress2) {
-        errors.push('Street address 2 is required.');
-    }
-
-    // Check if city is empty
-    if (!strCity) {
-        errors.push('City is required.');
-    }
-
-    // Check if state is empty
-    if (!strState) {
-        errors.push('State is required.');
-    }
-
-    // Check zip code format (5 digits)
-    const zipCodeRegex = /^\d{5}$/;
-    if (strZipCode && !zipCodeRegex.test(strZipCode)) {
-        errors.push('Zip code must be 5 digits.');
-    }
-
-    // Check phone number format (10 digits)
-    const phoneNumberRegex = /^\d{10}$/;
-    if (strPhoneNumber && !phoneNumberRegex.test(strPhoneNumber)) {
-        errors.push('Phone number must be 10 digits.');
-    }
-
-    // Check if coop ID is empty
-    if (!strCoopID) {
-        errors.push('Coop ID is required.');
-    }
-
-    // If there are errors, display them using SweetAlert2
-    if (errors.length > 0) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Uh-oh! Something went wrong...',
-            html: `
-                <div style="text-align: center; font-size: 16px; line-height: 1.8;">
-                    <p>Please check the following errors:</p>
-                    ${errors.map(error => `<div>${error}</div>`).join('')}
-                </div>
-            `,
-            showClass: {
-                popup: 'animate__animated animate__heartBeat', // Apply heartBeat animation
-            },
-            backdrop: `
-                rgba(0,0,0,0.4)
-                left top
-                no-repeat
-            `,
-        });
-        return;
-    }
-    // Simulate registration success
-    Swal.fire({
-        icon: 'success',
-        title: 'Registration Successful',
-        text: 'Welcome to Smart Chicken Coop!',
-    }).then(() => {
-        // Redirect to login or perform other actions
-        divRegistration.style.opacity = 0;
-        setTimeout(() => {
-            divRegistration.style.display = 'none';
-            divLogin.style.display = 'flex';
-            divLogin.style.opacity = 1;
-        }, 500);
+    formFields.forEach(fieldId => {
+        const field = document.getElementById(fieldId);
+        if (field) {
+            if (!field.classList.contains('is-valid')) {
+                field.classList.add('is-invalid'); // Mark as invalid if not valid
+                allValid = false;
+            }
+        }
     });
-    document.title = "Smart Chicken Coop | Login";
+
+    // Always set Street Address 2 to valid
+    const streetAddress2Input = document.getElementById('txtStreetAddress2');
+    if (streetAddress2Input) {
+        streetAddress2Input.classList.add('is-valid');
+        streetAddress2Input.classList.remove('is-invalid');
+    }
+
+    // Check if a state is selected
+    const stateSelect = document.getElementById('selState');
+    if (stateSelect) {
+        if (stateSelect.value === '' || stateSelect.value === null) {
+            stateSelect.classList.add('is-invalid'); // Mark as invalid if no state is selected
+            stateSelect.classList.remove('is-valid');
+            allValid = false;
+        } else {
+            stateSelect.classList.add('is-valid'); // Mark as valid if a state is selected
+            stateSelect.classList.remove('is-invalid');
+        }
+    }
+
+    if (allValid) {
+        console.log('Success');
+    } else {
+        console.log('Some fields are invalid.');
+    }
 });
 
 //Validation for Login
