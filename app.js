@@ -1,7 +1,6 @@
 // Buttons & Forms
 const divRegistration = document.getElementById('divRegistration');
 const divLogin = document.getElementById('divLogin');
-const btnCancelRegistration = document.getElementById('btnCancelRegistration');
 const btnShowLogin = document.getElementById('btnShowLogin');
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -14,66 +13,12 @@ document.addEventListener('DOMContentLoaded', () => {
         minimumResultsForSearch: Infinity, // Disable search box
     } );
 
-    // Check if the select element exists
-    const stateSelect = $('#selState');
-    if (stateSelect.length) {
-        // Add validation for Select2
-        stateSelect.on('change', function () {
-            const value = $(this).val();
-            if (value) {
-                $(this).next('.select2-container').find('.select2-selection').addClass('is-valid').removeClass('is-invalid');
-            } else {
-                $(this).next('.select2-container').find('.select2-selection').addClass('is-invalid').removeClass('is-valid');
-            }
-        });
-    }
-
-    // Email validation
-    const emailInput = document.getElementById('txtEmail');
-    if (emailInput) {
-        const emailFeedback = document.createElement('div');
-        emailFeedback.className = 'invalid-feedback'; // Bootstrap class for invalid feedback
-        emailFeedback.textContent = 'Please enter a valid email address.';
-        emailInput.parentNode.appendChild(emailFeedback); // Add feedback below the input
-
-        emailInput.addEventListener('input', function () {
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (emailRegex.test(this.value)) {
-                this.classList.add('is-valid');
-                this.classList.remove('is-invalid');
-                emailFeedback.style.display = 'none'; // Hide feedback if valid
-            } else {
-                this.classList.add('is-invalid');
-                this.classList.remove('is-valid');
-                emailFeedback.style.display = 'block'; // Show feedback if invalid
-            }
-        });
-    }
-
-    // Password validation
-    const passwordInput = document.getElementById('txtPassword');
-    if (passwordInput) {
-        const passwordFeedback = document.createElement('div');
-        passwordFeedback.className = 'invalid-feedback'; // Bootstrap class for invalid feedback
-        passwordFeedback.textContent = 'Password must be at least 8 characters long, include one uppercase letter, one number, and one special character.';
-        passwordInput.parentNode.appendChild(passwordFeedback); // Add feedback below the input
-
-        passwordInput.addEventListener('input', function () {
-            const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
-            if (passwordRegex.test(this.value)) {
-                this.classList.add('is-valid');
-                this.classList.remove('is-invalid');
-                passwordFeedback.style.display = 'none'; // Hide feedback if valid
-            } else {
-                this.classList.add('is-invalid');
-                this.classList.remove('is-valid');
-                passwordFeedback.style.display = 'block'; // Show feedback if invalid
-            }
-        });
-    }
-
     // Validation for required fields
     const requiredFields = [
+        { id: 'txtLoginEmail', feedback: 'Email is required.' },
+        { id: 'txtLoginPassword', feedback: 'Password is required.' },
+        { id: 'txtEmail', feedback: 'Password is required.' },
+        { id: 'txtPassword', feedback: 'Password is required.' },
         { id: 'txtFirstName', feedback: 'First name is required.' },
         { id: 'txtLastName', feedback: 'Last name is required.' },
         { id: 'txtStreetAddress1', feedback: 'Street Address 1 is required.' },
@@ -169,13 +114,35 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// "Cancel Registration" button fades div out on click, fades in login form, and sets title
-btnCancelRegistration.addEventListener('click', () => {
+// "Cancel Registration" button fades out registration, resets fields, and shows login
+// This function handles the transition from the registration form back to the login form when the "Cancel Registration" button is clicked.
+// It resets the registration form fields, hides the registration form, and shows the login form with a fade-in effect.
+// It also sets the document title to "Smart Chicken Coop | Login" after the transition is complete.
+document.getElementById('btnCancelRegistration').addEventListener('click', () => {
     // Fade out Registration
     divRegistration.style.transition = 'opacity 0.5s ease';
     divRegistration.style.opacity = 0;
 
     setTimeout(() => {
+        // Reset registration form fields, errors, and validation styles
+        divRegistration.querySelectorAll('input, select, textarea').forEach(el => {
+            el.value = '';
+            el.classList.remove('is-valid', 'is-invalid');
+        });
+
+        // Reset any error messages
+        divRegistration.querySelectorAll('.invalid-feedback').forEach(el => {
+            el.style.display = 'none';
+        });
+
+        // Reset Select2 dropdown if it exists
+        if ($('#selState').length) {
+            $('#selState').val(null).trigger('change');
+            $('#selState').next('.select2-container').find('.select2-selection')
+                .removeClass('is-valid is-invalid');
+        }
+
+        // Hide registration and show login
         divRegistration.style.display = 'none';
         divLogin.style.display = 'flex';
         divLogin.style.opacity = 0;
@@ -257,23 +224,10 @@ document.getElementById('btnShowDashboard').addEventListener('click', function()
     document.title = "Smart Chicken Coop | Dashboard";
 });
 
-
-// "Close Everything" button fades out registration and login divs
-document.getElementById('btnCloseEverything').addEventListener('click', function() {
-    divRegistration.style.opacity = 0;
-    divLogin.style.opacity = 0;
-  
-    setTimeout(() => {
-      divRegistration.style.display = 'none';
-      divRegistration.classList.remove('d-flex'); 
-      divLogin.style.display = 'none';
-      divLogin.classList.remove('d-flex'); 
-    }, 500); 
-    document.title = "Smart Chicken Coop";
-});
-
-// Validation for Registration Form
-document.getElementById('btnCreateAccount').addEventListener('click', () => {
+// The function is triggered by the click event on the "Create Account" button.
+// It validates the input fields, collects their values, and sends a POST request to create a new user account.
+// If the account creation is successful, it shows a success message and transitions to the login form.
+document.getElementById('btnCreateAccount').addEventListener('click', async () => {
     const formFields = [
         'txtFirstName',
         'txtLastName',
@@ -288,100 +242,281 @@ document.getElementById('btnCreateAccount').addEventListener('click', () => {
 
     let allValid = true;
 
+    // Validate fields and collect values
+    const values = {};
+
     formFields.forEach(fieldId => {
         const field = document.getElementById(fieldId);
         if (field) {
             if (!field.classList.contains('is-valid')) {
-                field.classList.add('is-invalid'); // Mark as invalid if not valid
+                field.classList.add('is-invalid');
                 allValid = false;
+            } else {
+                values[fieldId] = field.value.trim();
             }
         }
     });
 
-    // Always set Street Address 2 to valid
+    // Always mark Street Address 2 as valid
     const streetAddress2Input = document.getElementById('txtStreetAddress2');
     if (streetAddress2Input) {
         streetAddress2Input.classList.add('is-valid');
         streetAddress2Input.classList.remove('is-invalid');
+        values['txtStreetAddress2'] = streetAddress2Input.value.trim();
     }
 
-    // Check if a state is selected
-    const stateSelect = document.getElementById('selState');
-    if (stateSelect) {
-        if (stateSelect.value === '' || stateSelect.value === null) {
-            stateSelect.classList.add('is-invalid'); // Mark as invalid if no state is selected
-            stateSelect.classList.remove('is-valid');
-            allValid = false;
-        } else {
-            stateSelect.classList.add('is-valid'); // Mark as valid if a state is selected
-            stateSelect.classList.remove('is-invalid');
-        }
-    }
+    // Check State (from Select2)
+    const stateSelect = $('#selState');
+    const selectedState = stateSelect.val();
+    const stateSelectUI = stateSelect.next('.select2-container').find('.select2-selection');
 
-    if (allValid) {
-        console.log('Success');
+    if (!selectedState) {
+        stateSelectUI.addClass('is-invalid').removeClass('is-valid');
+        allValid = false;
     } else {
+        stateSelectUI.addClass('is-valid').removeClass('is-invalid');
+        values['selState'] = selectedState;
+    }
+
+    if (!allValid) {
         console.log('Some fields are invalid.');
+        return;
+    }
+
+    console.log('Success');
+
+    try {
+        // Step 1: Create the user account first
+        const userFormData = new URLSearchParams();
+        userFormData.append('Email', values['txtEmail']);
+        userFormData.append('Password', values['txtPassword']);
+        userFormData.append('FirstName', values['txtFirstName']);
+        userFormData.append('LastName', values['txtLastName']);
+        userFormData.append('CoopID', values['txtCoopRegistrationID']);
+
+        const userResponse = await fetch('https://simplecoop.swollenhippo.com/users.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: userFormData.toString(),
+        });
+
+        const userResponseText = await userResponse.text();
+        console.log('User Creation Raw Response:', userResponseText);
+
+        const userData = JSON.parse(userResponseText);
+
+        if (userData.Outcome === 'New User Created') {
+            // Step 2: Now log in to get a SessionID
+            const loginFormData = new URLSearchParams();
+            loginFormData.append('Email', values['txtEmail']);
+            loginFormData.append('Password', values['txtPassword']);
+
+            const loginResponse = await fetch('https://simplecoop.swollenhippo.com/sessions.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: loginFormData.toString(),
+            });
+
+            const loginResponseText = await loginResponse.text();
+            console.log('Login Raw Response:', loginResponseText);
+
+            const loginData = JSON.parse(loginResponseText);
+
+            if (loginData.SessionID) {
+                // Step 3: Update the coop information with the address
+                const coopFormData = new URLSearchParams();
+                coopFormData.append('SessionID', loginData.SessionID);
+                coopFormData.append('Street1', values['txtStreetAddress1']);
+                coopFormData.append('Street2', values['txtStreetAddress2'] || '');
+                coopFormData.append('City', values['txtCity']);
+                coopFormData.append('State', values['selState']);
+                coopFormData.append('ZIP', values['txtZipCode']);
+
+                const coopResponse = await fetch('https://simplecoop.swollenhippo.com/coop.php', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: coopFormData.toString(),
+                });
+
+                // Main session id --> 3b5b4d6b-e65d-4fdc-ab59-0b489adc256b
+
+                const coopResponseText = await coopResponse.text();
+                console.log('Coop Update Raw Response:', coopResponseText);
+
+                const coopData = JSON.parse(coopResponseText);
+
+                if (coopData.Outcome === 'Address Updated' || coopData.Outcome.includes('success')) {
+                    // Save the session ID for logged-in state
+                    localStorage.setItem('SessionID', loginData.SessionID);
+                    
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Account Created',
+                        text: 'Your account has been successfully created with all your information. Directing you to the dashboard...',
+                    }).then(() => {
+                        const divRegistration = document.getElementById('divRegistration');
+                        const divDashboard = document.getElementById('divDashboard');
+
+                        divRegistration.style.transition = 'opacity 0.5s ease';
+                        divRegistration.style.opacity = 0;
+
+                        setTimeout(() => {
+                            divRegistration.style.display = 'none';
+                            divDashboard.style.display = 'flex';
+                            divDashboard.style.opacity = 0;
+
+                            setTimeout(() => {
+                                divDashboard.style.transition = 'opacity 0.5s ease';
+                                divDashboard.style.opacity = 1;
+                            }, 10);
+                        }, 500);
+
+                        document.title = "Smart Chicken Coop | Dashboard";
+                    });
+                } else {
+                    // If coop update fails, still direct to login but with a warning
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Account Created',
+                        text: 'Your account was created, but there was an issue saving your address information. You can update it later.',
+                    }).then(() => {
+                        const divRegistration = document.getElementById('divRegistration');
+                        const divLogin = document.getElementById('divLogin');
+
+                        divRegistration.style.transition = 'opacity 0.5s ease';
+                        divRegistration.style.opacity = 0;
+
+                        setTimeout(() => {
+                            divRegistration.style.display = 'none';
+                            divLogin.style.display = 'flex';
+                            divLogin.style.opacity = 0;
+
+                            setTimeout(() => {
+                                divLogin.style.transition = 'opacity 0.5s ease';
+                                divLogin.style.opacity = 1;
+                            }, 10);
+                        }, 500);
+
+                        document.title = "Smart Chicken Coop | Login";
+                    });
+                }
+            } else {
+                // If login fails after account creation
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Account Created',
+                    text: 'Your account was created, but there was an issue with automatic login. Please log in manually.',
+                }).then(() => {
+                    const divRegistration = document.getElementById('divRegistration');
+                    const divLogin = document.getElementById('divLogin');
+
+                    divRegistration.style.transition = 'opacity 0.5s ease';
+                    divRegistration.style.opacity = 0;
+
+                    setTimeout(() => {
+                        divRegistration.style.display = 'none';
+                        divLogin.style.display = 'flex';
+                        divLogin.style.opacity = 0;
+
+                        setTimeout(() => {
+                            divLogin.style.transition = 'opacity 0.5s ease';
+                            divLogin.style.opacity = 1;
+                        }, 10);
+                    }, 500);
+
+                    document.title = "Smart Chicken Coop | Login";
+                });
+            }
+        } else {
+            // If account creation fails
+            Swal.fire({
+                icon: 'error',
+                title: 'Account Creation Failed',
+                text: userData.Outcome || 'An error occurred while creating your account.',
+            });
+        }
+
+    } catch (error) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'An error occurred while trying to create your account. Please try again later.',
+        });
+        console.error('Account creation error:', error);
     }
 });
 
-//Validation for Login
+// Login button event listener
+// This function handles the login process when the "Login" button is clicked
+// It validates the email and password fields, sends a POST request to the server, and handles the response.
+// It also provides feedback to the user using SweetAlert2 for success and error messages.
+// The function is asynchronous to handle the fetch request and response processing.
+// It uses the Fetch API to send the login data to the server and processes the response accordingly.
+// The function also handles the display of the login form and the dashboard based on the login status.
+// It uses localStorage to store the session ID upon successful login and updates the document title to reflect the current page.
+// The function also includes error handling for network issues and invalid responses from the server.
 document.getElementById('btnLogin').addEventListener('click', async () => {
-    const email = document.getElementById('txtLoginEmail').value.trim();
-    const password = document.getElementById('txtLoginPassword').value.trim();
+    const formFields = [
+        'txtLoginEmail',
+        'txtLoginPassword'
+    ];
 
-    // Initialize an array to store errors
-    const errors = [];
+    let allValid = true;
 
-    // Check if email is empty
-    if (!email) {
-        errors.push('Email is required.');
-    } else {
-        // Check if email format is valid
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(email)) {
-            errors.push('Invalid email format.');
+    // Validate fields and collect values
+    const values = {};
+
+    formFields.forEach(fieldId => {
+        const field = document.getElementById(fieldId);
+        if (field) {
+            if (!field.classList.contains('is-valid')) {
+                field.classList.add('is-invalid');
+                allValid = false;
+            } else {
+                values[fieldId] = field.value.trim();
+            }
         }
-    }
+    });
 
-    // Check if password is empty
-    if (!password) {
-        errors.push('Password is required.');
-    }
-
-    // If there are errors, display them using SweetAlert2
-    if (errors.length > 0) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Validation Errors',
-            html: `<ul>${errors.map(error => `<li>${error}</li>`).join('')}</ul>`,
-        });
+    if (!allValid) {
+        console.log('Some fields are invalid.');
         return;
     }
 
     try {
-        // Make a POST request to the sessions.php endpoint
+        const bodyData = new URLSearchParams();
+        bodyData.append('Email', values['txtLoginEmail']);
+        bodyData.append('Password', values['txtLoginPassword']);
+
         const response = await fetch('https://simplecoop.swollenhippo.com/sessions.php', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
+                'Content-Type': 'application/x-www-form-urlencoded',
             },
-            body: JSON.stringify({ Email: email, Password: password }),
+            body: bodyData.toString(),
         });
 
-        const data = await response.json();
+        const text = await response.text();
+        console.log('Login raw response:', text);
 
-        if (data.Outcome === 'Success' && data.SessionID) {
-            // Store the SessionID in localStorage
+        const data = JSON.parse(text);
+
+        if (data.SessionID) {
             localStorage.setItem('SessionID', data.SessionID);
 
-            // Show success message
             Swal.fire({
                 icon: 'success',
                 title: 'Login Successful',
-                text: 'Welcome back!',
+                text: 'Welcome back, redirecting you to the dashboard...',
+                timer: 2000,
+                showConfirmButton: false,
             }).then(() => {
-                // Redirect to dashboard or perform other actions
                 document.getElementById('divLogin').style.opacity = 0;
                 setTimeout(() => {
                     document.getElementById('divLogin').style.display = 'none';
@@ -392,15 +527,14 @@ document.getElementById('btnLogin').addEventListener('click', async () => {
                 document.title = "Smart Chicken Coop | Dashboard";
             });
         } else {
-            // Show error message if login fails
             Swal.fire({
                 icon: 'error',
                 title: 'Login Failed',
-                text: data.Outcome || 'Invalid email or password. Please try again.',
+                text: 'Invalid email or password. Please try again.',
             });
         }
+
     } catch (error) {
-        // Handle network or server errors
         Swal.fire({
             icon: 'error',
             title: 'Error',
@@ -408,4 +542,40 @@ document.getElementById('btnLogin').addEventListener('click', async () => {
         });
         console.error('Login error:', error);
     }
+});
+
+// "Create New User" button event listener
+// This function handles the transition from the login form to the registration form when the "Create New User" button is clicked.
+document.getElementById('btnCreateNewUser').addEventListener('click', () => {
+    const divLogin = document.getElementById('divLogin');
+    const divRegistration = document.getElementById('divRegistration');
+
+    // Hide the login form
+    divLogin.style.transition = 'opacity 0.5s ease';
+    divLogin.style.opacity = 0;
+
+    setTimeout(() => {
+        divLogin.querySelectorAll('input, select, textarea').forEach(el => {
+            el.value = '';
+            el.classList.remove('is-valid', 'is-invalid');
+        });
+
+        // Reset any error messages
+        divLogin.querySelectorAll('.invalid-feedback').forEach(el => {
+            el.style.display = 'none';
+        });
+
+        divLogin.style.display = 'none';
+
+        // Show the registration form
+        divRegistration.style.display = 'flex';
+        divRegistration.style.opacity = 0;
+
+        setTimeout(() => {
+            divRegistration.style.transition = 'opacity 0.5s ease';
+            divRegistration.style.opacity = 1;
+        }, 10);
+    }, 500);
+
+    document.title = "Smart Chicken Coop | Registration";
 });
