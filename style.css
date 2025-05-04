@@ -53,5 +53,13 @@
     box-shadow: 0 0 0 0.25rem rgba(25, 135, 84, 0.25) !important;
 }
 
+/* Remove focus outline for the settings button */
+#btnSettings:focus {
+    outline: none;
+    box-shadow: none;
+}
 
-
+.dark-mode {
+    background-color: #121212 !important; /* Dark background */
+    color: #ffffff; /* Light text */
+}

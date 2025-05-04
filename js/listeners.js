@@ -231,6 +231,36 @@ document.getElementById('btnCreateAccount').addEventListener('click', async () =
                 });
 
                 if (addressData.Outcome === 'Address Added') {
+                    // Step 4: Create default settings for the user
+                    try {
+                        await settingsApiHandler('POST', {
+                            SessionID: loginData.SessionID,
+                            setting: 'darkMode',
+                            value: 'disabled'
+                        });
+
+                        await settingsApiHandler('POST', {
+                            SessionID: loginData.SessionID,
+                            setting: 'temperatureUnit',
+                            value: 'Celsius'
+                        });
+
+                        await settingsApiHandler('POST', {
+                            SessionID: loginData.SessionID,
+                            setting: 'humidityUnit',
+                            value: 'Percentage'
+                        });
+
+                        console.log('Default settings created successfully.');
+                    } catch (error) {
+                        console.error('Error creating default settings:', error);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'An error occurred while creating default settings. Please try again later.',
+                        });
+                    }
+
                     // Save the session ID for logged-in state
                     localStorage.setItem('SessionID', loginData.SessionID);
                     
@@ -483,4 +513,249 @@ document.getElementById('btnCreateNewUser').addEventListener('click', () => {
     }, 500);
 
     document.title = "Smart Chicken Coop | Registration";
+});
+
+// Whenever button with id of btnSettings is clicked, show the settings div it should appear over top the 
+// dashboard. It should be a popup that is centered on the screen. The dashboard should be blurred out behind it.
+document.getElementById('btnSettings').addEventListener('click', async () => {
+    const divSettings = document.getElementById('divSettings');
+    const divDashboard = document.getElementById('divDashboard');
+
+    // Show the settings div and blur the dashboard
+    divSettings.style.display = 'flex';
+    divDashboard.style.filter = 'blur(5px)';
+    divSettings.style.opacity = 0;
+
+    setTimeout(() => {
+        divSettings.style.transition = 'opacity 0.5s ease';
+        divSettings.style.opacity = 1;
+    }, 10);
+
+    // Get the SessionID from localStorage
+    const sessionID = localStorage.getItem('SessionID');
+    if (!sessionID) {
+        console.error('No SessionID found. Please log in again.');
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'No session found. Please log in again.',
+        });
+        return;
+    }
+
+    try {
+        // Fetch saved settings from the backend
+        const darkModeSetting = await settingsApiHandler('GET', { SessionID: sessionID, setting: 'darkMode' });
+        const temperatureUnitSetting = await settingsApiHandler('GET', { SessionID: sessionID, setting: 'temperatureUnit' });
+        const humidityUnitSetting = await settingsApiHandler('GET', { SessionID: sessionID, setting: 'humidityUnit' });
+
+        // Update the toggles based on the fetched settings or default values
+        const chkDarkMode = document.getElementById('chkDarkMode');
+        const chkTemperatureUnit = document.getElementById('chkTemperatureUnit');
+        const chkHumidityUnit = document.getElementById('chkHumidityUnit');
+
+        chkDarkMode.checked = darkModeSetting.Value === 'enabled' || false; // Default: false
+        chkTemperatureUnit.checked = temperatureUnitSetting?.value === 'Fahrenheit' || false; // Default: Celsius
+        chkHumidityUnit.checked = humidityUnitSetting?.value === 'Absolute' || false; // Default: Percentage
+
+        // Store the original state of the settings
+        chkDarkMode.dataset.originalState = chkDarkMode.checked;
+        chkTemperatureUnit.dataset.originalState = chkTemperatureUnit.checked;
+        chkHumidityUnit.dataset.originalState = chkHumidityUnit.checked;
+
+    } catch (error) {
+        console.error('Error fetching settings:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'An error occurred while fetching your settings. Please try again later.',
+        });
+    }
+});
+
+// Whenever the checkbox with id of chkDarkMode is clicked, toggle the dark mode class on the body element.
+// It also saves the user's preference in localStorage so that it persists across page reloads.
+// The dark mode class is applied to the body element, which changes the background color and text color of the page.
+document.getElementById('chkDarkMode').addEventListener('click', () => {
+    const body = document.body;
+    const isChecked = document.getElementById('chkDarkMode').checked;
+    const btnSaveSettings = document.getElementById('btnSaveSettings');
+
+    if (isChecked) {
+        body.classList.add('dark-mode');
+        localStorage.setItem('darkMode', 'enabled');
+
+        if (btnSaveSettings) {
+            btnSaveSettings.disabled = false;
+        } 
+    } else {
+        body.classList.remove('dark-mode');
+        localStorage.setItem('darkMode', 'disabled');
+
+        if (btnSaveSettings) {
+            btnSaveSettings.disabled = false;
+        }
+    }
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Whenever the button with id of btnSaveSettings is clicked, save the settings and close the settings div
+// It should also remove the blur effect from the dashboard and hide the settings div.
+// The settings are saved in localStorage so that they persist across page reloads.
+// The function also updates the document title to reflect the current page.
+document.getElementById('btnSaveSettings').addEventListener('click', async () => {
+    const divSettings = document.getElementById('divSettings');
+    const divDashboard = document.getElementById('divDashboard');
+
+    // Get the current state of the settings
+    const chkDarkMode = document.getElementById('chkDarkMode');
+    const chkTemperatureUnit = document.getElementById('chkTemperatureUnit');
+    const chkHumidityUnit = document.getElementById('chkHumidityUnit');
+
+    // Get the SessionID from localStorage
+    const sessionID = localStorage.getItem('SessionID');
+    if (!sessionID) {
+        console.error('No SessionID found. Please log in again.');
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'No session found. Please log in again.',
+        });
+        return;
+    }
+
+    try {
+        // Update Dark Mode setting
+        await settingsApiHandler('PUT', {
+            SessionID: sessionID,
+            setting: 'darkMode',
+            value: chkDarkMode.checked ? 'enabled' : 'disabled',
+        });
+
+        // Update Temperature Unit setting
+        await settingsApiHandler('PUT', {
+            SessionID: sessionID,
+            setting: 'temperatureUnit',
+            value: chkTemperatureUnit.checked ? 'Fahrenheit' : 'Celsius',
+        });
+
+        // Update Humidity Unit setting
+        await settingsApiHandler('PUT', {
+            SessionID: sessionID,
+            setting: 'humidityUnit',
+            value: chkHumidityUnit.checked ? 'Absolute' : 'Percentage',
+        });
+
+        // Save the settings in localStorage
+        localStorage.setItem('darkMode', chkDarkMode.checked ? 'enabled' : 'disabled');
+        localStorage.setItem('temperatureUnit', chkTemperatureUnit.checked ? 'Fahrenheit' : 'Celsius');
+        localStorage.setItem('humidityUnit', chkHumidityUnit.checked ? 'Absolute' : 'Percentage');
+
+        // Apply the dark mode class to the body if enabled
+        if (chkDarkMode.checked) {
+            document.body.classList.add('dark-mode');
+        } else {
+            document.body.classList.remove('dark-mode');
+        }
+
+        // Show success notification with a 2000ms timer
+        Swal.fire({
+            icon: 'success',
+            title: 'Settings Saved',
+            text: 'Your settings have been successfully updated.',
+            timer: 2000,
+            showConfirmButton: false,
+        });
+
+        // Wait for the notification to finish before hiding the settings div
+        setTimeout(() => {
+            // Hide the settings div and remove the blur from the dashboard
+            divSettings.style.transition = 'opacity 0.5s ease';
+            divSettings.style.opacity = 0;
+
+            setTimeout(() => {
+                divSettings.style.display = 'none';
+                divDashboard.style.filter = 'none';
+            }, 500);
+
+            document.title = "Smart Chicken Coop | Dashboard";
+
+            // Disable the save settings button after saving
+            const btnSaveSettings = document.getElementById('btnSaveSettings');
+            if (btnSaveSettings) {
+                btnSaveSettings.disabled = true;
+            }
+        }, 2000); // Wait for the notification timer to finish
+    } catch (error) {
+        console.error('Error updating settings:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'An error occurred while updating your settings. Please try again later.',
+        });
+    }
+});
+
+// Whenever the button with id of btnCloseSettings is clicked, close the settings div and remove the blur from the dashboard
+// It should also hide the settings div and remove the blur effect from the dashboard.
+// The function also updates the document title to reflect the current page.
+// It should also disable the save settings button after closing the settings div.
+// It should also revert back any changes made in the settings div to their original state.
+document.getElementById('btnCloseSettings').addEventListener('click', () => {
+    const divSettings = document.getElementById('divSettings');
+    const divDashboard = document.getElementById('divDashboard');
+
+    // Restore the original state of the settings
+    const chkDarkMode = document.getElementById('chkDarkMode');
+    const chkTemperatureUnit = document.getElementById('chkTemperatureUnit');
+    const chkHumidityUnit = document.getElementById('chkHumidityUnit');
+
+    // Revert to the original state stored in data attributes
+    chkDarkMode.checked = chkDarkMode.dataset.originalState === 'true';
+    chkTemperatureUnit.checked = chkTemperatureUnit.dataset.originalState === 'true';
+    chkHumidityUnit.checked = chkHumidityUnit.dataset.originalState === 'true';
+
+    // Remove the dark mode class from the body if it was toggled
+    if (!chkDarkMode.checked) {
+        document.body.classList.remove('dark-mode');
+    } else {
+        document.body.classList.add('dark-mode');
+    }
+
+    // Hide the settings div and remove the blur from the dashboard
+    divSettings.style.transition = 'opacity 0.5s ease';
+    divSettings.style.opacity = 0;
+
+    setTimeout(() => {
+        divSettings.style.display = 'none';
+        divDashboard.style.filter = 'none';
+    }, 500);
+
+    document.title = "Smart Chicken Coop | Dashboard";
+
+    // Disable the save settings button after closing
+    const btnSaveSettings = document.getElementById('btnSaveSettings');
+    if (btnSaveSettings) {
+        btnSaveSettings.disabled = true;
+    }
 });

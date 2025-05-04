@@ -183,10 +183,52 @@
         </form>
     </div>
 
+    <div id="divSettings" class="justify-content-center" style="display: none; opacity: 0; transition: opacity 0.5s;">
+        <form class="card col-12 col-lg-6 mt-2">
+            <div class="card-body d-flex align-items-center justify-content-center position-relative">
+                <!-- Settings Title -->
+                <h1 class="text-center mb-0 flex-grow-1">Settings</h1>
+                <!-- Close Icon -->
+                <button id="btnCloseSettings" type="button" class="btn btn-link no-focus position-absolute top-0 end-0 m-3" title="Close">
+                    <i class="fas fa-times fa-2x"></i>
+                </button>
+            </div>
+            <div class="card-body">
+                <!-- Dark Mode Toggle -->
+                <div class="form-check form-switch mb-3">
+                    <input class="form-check-input" type="checkbox" id="chkDarkMode" role="switch">
+                    <label class="form-check-label" for="chkDarkMode">Dark Mode</label>
+                </div>
+    
+                <!-- Temperature Unit Toggle -->
+                <div class="form-check form-switch mb-3">
+                    <input class="form-check-input" type="checkbox" id="chkTemperatureUnit" role="switch">
+                    <label class="form-check-label" for="chkTemperatureUnit">Temperature Unit (Celsius / Fahrenheit)</label>
+                </div>
+    
+                <!-- Humidity Unit Toggle -->
+                <div class="form-check form-switch mb-3">
+                    <input class="form-check-input" type="checkbox" id="chkHumidityUnit" role="switch">
+                    <label class="form-check-label" for="chkHumidityUnit">Humidity Unit (Percentage / Absolute)</label>
+                </div>
+    
+                <!-- Save Settings Button -->
+                <div class="d-flex justify-content-center mt-3">
+                    <button type="button" id="btnSaveSettings" class="btn btn-primary" disabled>Save Settings</button>
+                </div>
+            </div>
+        </form>
+    </div>
+
     <div id="divDashboard" class="justify-content-center" style="display: none; opacity: 0; transition: opacity 0.5s;">
         <form class="card col-12 col-lg-6 mt-2">
-            <div class="card-body">
-                <h1 class="text-center">Dashboard</h1>
+            <div class="card-body d-flex align-items-center justify-content-center position-relative">
+                <!-- Dashboard Title -->
+                <h1 class="text-center mb-0 flex-grow-1">Dashboard</h1>
+                <!-- Settings Icon -->
+                <button id="btnSettings" type="button" class="btn btn-link no-focus position-absolute top-0 end-0 m-3" title="Settings">
+                    <i class="fas fa-cog fa-2x"></i>
+                </button>
             </div>
         </form>
     </div>
