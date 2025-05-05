@@ -598,27 +598,6 @@ document.getElementById('chkDarkMode').addEventListener('click', () => {
     }
 });
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 // Whenever the button with id of btnSaveSettings is clicked, save the settings and close the settings div
 // It should also remove the blur effect from the dashboard and hide the settings div.
 // The settings are saved in localStorage so that they persist across page reloads.
@@ -757,5 +736,100 @@ document.getElementById('btnCloseSettings').addEventListener('click', () => {
     const btnSaveSettings = document.getElementById('btnSaveSettings');
     if (btnSaveSettings) {
         btnSaveSettings.disabled = true;
+    }
+});
+
+// Toggle door button event listener
+document.getElementById('btnToggleDoor').addEventListener('click', async () => {
+    const doorStatusElement = document.getElementById('doorStatus');
+    const button = document.getElementById('btnToggleDoor');
+    const sessionID = localStorage.getItem('SessionID');
+
+    if (!sessionID) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'No session found. Please log in again.',
+        });
+        return;
+    }
+
+    try {
+        // Determine the new door state
+        const newStatus = doorStatusElement.textContent === 'Closed' ? 'Open' : 'Closed';
+
+        // Update the door status on the backend
+        const response = await fetch('settings.php', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                SessionID: sessionID,
+                setting: 'doorStatus',
+                value: newStatus,
+            }),
+        });
+
+        const result = await response.json();
+
+        if (result.Outcome === 'Success') {
+            // Update the UI
+            doorStatusElement.textContent = newStatus;
+            button.textContent = newStatus === 'Closed' ? 'Open Door' : 'Close Door';
+
+            Swal.fire({
+                icon: 'success',
+                title: 'Door Status Updated',
+                text: `The door is now ${newStatus}.`,
+                timer: 2000,
+                showConfirmButton: false,
+            });
+        } else {
+            throw new Error('Failed to update door status.');
+        }
+    } catch (error) {
+        console.error('Error updating door status:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'An error occurred while updating the door status. Please try again later.',
+        });
+    }
+});
+
+// Fetch the current door status on page load
+document.addEventListener('DOMContentLoaded', async () => {
+    const doorStatusElement = document.getElementById('doorStatus');
+    const button = document.getElementById('btnToggleDoor');
+    const sessionID = localStorage.getItem('SessionID');
+
+    if (!sessionID) {
+        console.error('No SessionID found. Please log in again.');
+        return;
+    }
+
+    try {
+        // Fetch the current door status
+        const response = await fetch('settings.php', {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                SessionID: sessionID,
+                setting: 'doorStatus',
+            }),
+        });
+
+        const result = await response.json();
+
+        if (result.length > 0) {
+            const currentStatus = result[0].value || 'Closed';
+            doorStatusElement.textContent = currentStatus;
+            button.textContent = currentStatus === 'Closed' ? 'Open Door' : 'Close Door';
+        } else {
+            console.warn('No door status found. Defaulting to "Closed".');
+            doorStatusElement.textContent = 'Closed';
+            button.textContent = 'Open Door';
+        }
+    } catch (error) {
+        console.error('Error fetching door status:', error);
     }
 });
