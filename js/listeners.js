@@ -1104,10 +1104,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-document.addEventListener('DOMContentLoaded', () => {
-    const ctx = document.getElementById('environmentChart').getContext('2d');
+document.addEventListener('DOMContentLoaded', async () => {
     const temperatureElement = document.getElementById('temperature');
-    const humidityElement = document.getElementById('humidity');
+    const ctx = document.getElementById('environmentChart').getContext('2d');
 
     // Initialize the environment chart
     const environmentChart = new Chart(ctx, {
@@ -1116,14 +1115,14 @@ document.addEventListener('DOMContentLoaded', () => {
             labels: [], // Timestamps
             datasets: [
                 {
-                    label: 'Temperature (°C)',
+                    label: 'Temperature (°C)', // Default to Celsius
                     data: [], // Temperature values
                     borderColor: 'rgba(255, 99, 132, 1)',
                     backgroundColor: 'rgba(255, 99, 132, 0.2)',
                     borderWidth: 2,
                     tension: 0.4,
                 },
-                {
+{
                     label: 'Humidity (%)',
                     data: [], // Humidity values
                     borderColor: 'rgba(54, 162, 235, 1)',
@@ -1146,38 +1145,69 @@ document.addEventListener('DOMContentLoaded', () => {
                     beginAtZero: true,
                     title: {
                         display: true,
-                        text: 'Value',
+                        text: 'Temperature',
                     },
                 },
             },
         },
     });
 
-    // Function to add data to the chart
-    function addEnvironmentData(temperature, humidity) {
-        const now = new Date().toLocaleTimeString(); // Current time as label
+    // Helper function to convert Celsius to Fahrenheit
+    function celsiusToFahrenheit(celsius) {
+        return (celsius * 9) / 5 + 32;
+    }
 
-        // Add the new data to the chart
+    // Helper function to update the temperature display and chart
+    function updateTemperatureDisplay(temperature, unit) {
+        const convertedTemperature =
+            unit === 'Fahrenheit' ? celsiusToFahrenheit(temperature) : temperature;
+
+        // Update the temperature display
+        temperatureElement.textContent = `${convertedTemperature.toFixed(1)} °${unit === 'Fahrenheit' ? 'F' : 'C'}`;
+
+        // Update the chart label
+        environmentChart.data.datasets[0].label = `Temperature (°${unit === 'Fahrenheit' ? 'F' : 'C'})`;
+
+        // Add the data to the chart
+        const now = new Date().toLocaleTimeString();
         environmentChart.data.labels.push(now);
-        environmentChart.data.datasets[0].data.push(temperature); // Add temperature
-        environmentChart.data.datasets[1].data.push(humidity); // Add humidity
+        environmentChart.data.datasets[0].data.push(convertedTemperature);
 
-        // Limit the number of data points to 10 for better readability
+        // Limit the number of data points to 10
         if (environmentChart.data.labels.length > 10) {
             environmentChart.data.labels.shift();
             environmentChart.data.datasets[0].data.shift();
-            environmentChart.data.datasets[1].data.shift();
         }
 
         // Update the chart
         environmentChart.update();
     }
 
-    // Function to fetch weather data for Nashville, TN
+    // Fetch the user's preferred temperature unit
+    const sessionID = localStorage.getItem('SessionID');
+    if (!sessionID) {
+        console.error('No SessionID found. Please log in again.');
+        return;
+    }
+
+    let temperatureUnit = 'Celsius'; // Default to Celsius
+    try {
+        const temperatureUnitSetting = await settingsApiHandler('GET', {
+            SessionID: sessionID,
+            setting: 'temperatureUnit',
+        });
+        if (temperatureUnitSetting?.value) {
+            temperatureUnit = temperatureUnitSetting.value; // Use the user's preferred unit
+        }
+    } catch (error) {
+        console.error('Error fetching temperature unit setting:', error);
+    }
+
+    // Fetch weather data and update the UI
     async function fetchWeatherData() {
         const latitude = 36.1627; // Latitude for Nashville
         const longitude = -86.7816; // Longitude for Nashville
-        const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true&humidity=true`;
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true&hourly=relativehumidity_2m`;
 
         try {
             const response = await fetch(url);
@@ -1185,19 +1215,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (response.ok && data.current_weather) {
                 const temperature = data.current_weather.temperature; // Temperature in °C
-                const humidity = data.current_weather.relativehumidity || 0; // Humidity in %
-                const observationTime = data.current_weather.time; // Observation time from API
+                const humidity = data.hourly?.relativehumidity_2m?.[0] || '--'; // Humidity in %
+                const observationTime = data.current_weather.time || null; // Observation time
 
-                // Update the temperature and humidity display
-                temperatureElement.textContent = `${temperature.toFixed(1)} °C`;
-                humidityElement.textContent = `${humidity.toFixed(1)} %`;
+                // Update the temperature display and chart
+                updateTemperatureDisplay(temperature, temperatureUnit);
+
+                // Update the humidity display
+                const humidityElement = document.getElementById('humidity');
+                humidityElement.textContent = `${humidity} %`;
 
                 // Update the "Last Observation" field
-                const formattedTime = new Date(observationTime).toLocaleString(); // Format the time
-                document.getElementById('observationDateTime').textContent = formattedTime;
-
-                // Add the data to the chart
-                addEnvironmentData(temperature, humidity);
+                const observationElement = document.getElementById('observationDateTime');
+                if (observationTime) {
+                    const formattedTime = new Date(observationTime).toLocaleString(); // Format the time
+                    observationElement.textContent = formattedTime;
+                } else {
+                    observationElement.textContent = '--';
+                }
             } else {
                 console.error('Error fetching weather data:', data);
             }
