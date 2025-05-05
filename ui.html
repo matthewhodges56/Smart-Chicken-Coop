@@ -294,8 +294,12 @@
                         <div class="col-md-6 text-center">
                             <h5 class="mb-3">Heater Auto Turn-On</h5>
                             <div class="d-flex justify-content-center align-items-center">
-                                <label for="autoHeaterThreshold" class="form-label me-2">Threshold (°C):</label>
-                                <input id="autoHeaterThreshold" type="number" class="form-control w-50" placeholder="Enter temperature">
+                                <label for="autoHeaterThreshold" class="form-label me-2">Threshold:</label>
+                                <input id="autoHeaterThreshold" type="number" class="form-control w-50 me-2" placeholder="Enter temperature">
+                                <select id="heaterUnit" class="form-select w-auto">
+                                    <option value="Celsius">°C</option>
+                                    <option value="Fahrenheit">°F</option>
+                                </select>
                                 <button id="btnSetHeaterThreshold" type="button" class="btn btn-primary ms-2">Set</button>
                             </div>
                         </div>
@@ -303,8 +307,12 @@
                         <div class="col-md-6 text-center">
                             <h5 class="mb-3">Fan Auto Turn-On</h5>
                             <div class="d-flex justify-content-center align-items-center">
-                                <label for="autoFanThreshold" class="form-label me-2">Threshold (°C):</label>
-                                <input id="autoFanThreshold" type="number" class="form-control w-50" placeholder="Enter temperature">
+                                <label for="autoFanThreshold" class="form-label me-2">Threshold:</label>
+                                <input id="autoFanThreshold" type="number" class="form-control w-50 me-2" placeholder="Enter temperature">
+                                <select id="fanUnit" class="form-select w-auto">
+                                    <option value="Celsius">°C</option>
+                                    <option value="Fahrenheit">°F</option>
+                                </select>
                                 <button id="btnSetFanThreshold" type="button" class="btn btn-primary ms-2">Set</button>
                             </div>
                         </div>
