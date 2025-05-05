@@ -458,6 +458,21 @@ document.getElementById('btnLogin').addEventListener('click', async () => {
         if (loginData.SessionID) {
             localStorage.setItem('SessionID', loginData.SessionID);
 
+            // Fetch and apply temperature unit setting before showing dashboard
+            try {
+                const temperatureUnitSetting = await settingsApiHandler('GET', {
+                    SessionID: loginData.SessionID,
+                    setting: 'temperatureUnit'
+                });
+
+                if (temperatureUnitSetting?.Value === 'Fahrenheit') {
+                    updateDashboardTemperatures('Fahrenheit');
+                    document.getElementById('chkTemperatureUnit').checked = true;
+                }
+            } catch (error) {
+                console.error('Error fetching temperature unit setting:', error);
+            }
+
             Swal.fire({
                 icon: 'success',
                 title: 'Login Successful',
@@ -1011,6 +1026,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Monitor Temperature and Automatically Control Heater/Fan
     setInterval(() => {
+        // Check if dashboard is visible before showing alerts
+        const divDashboard = document.getElementById('divDashboard');
+        if (divDashboard.style.display !== 'flex' || divDashboard.style.opacity !== '1') {
+            return; // Exit if dashboard isn't fully visible
+        }
+
         const heaterThreshold = parseFloat(localStorage.getItem('heaterThreshold') || 18); // Default: 18°C
         const fanThreshold = parseFloat(localStorage.getItem('fanThreshold') || 25); // Default: 25°C
         const currentTemp = parseFloat(document.getElementById('temperature').textContent);
@@ -1272,8 +1293,19 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 // Update the "Last Observation" field
                 const observationElement = document.getElementById('observationDateTime');
+                // Inside the fetchWeatherData function, update the observation time handling:
                 if (observationTime) {
-                    const formattedTime = new Date(observationTime).toLocaleString(); // Format the time
+                    // Convert UTC time to local time
+                    const date = new Date(observationTime + 'Z'); // Add 'Z' to indicate UTC
+                    const formattedTime = date.toLocaleString('en-US', {
+                        year: 'numeric',
+                        month: 'numeric',
+                        day: 'numeric',
+                        hour: 'numeric',
+                        minute: 'numeric',
+                        second: 'numeric',
+                        hour12: true
+                    });
                     observationElement.textContent = formattedTime;
                 } else {
                     observationElement.textContent = '--';
@@ -1292,6 +1324,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Fetch weather data immediately on page load
     fetchWeatherData();
 });
+
 document.addEventListener('DOMContentLoaded', () => {
     const feedLevelElement = document.getElementById('feedLevel');
     const waterLevelElement = document.getElementById('waterLevel');
