@@ -40,92 +40,92 @@ document.getElementById('btnCancelRegistration').addEventListener('click', () =>
     document.title = "Smart Chicken Coop | Login";
 });
 
-btnShowLogin.addEventListener('click', function() {
-    // If registration is showing, fade it out and show login
-    if (divRegistration.style.display === 'flex' || divRegistration.style.opacity === '1') {
-        divRegistration.style.transition = 'opacity 0.5s ease';
-        divRegistration.style.opacity = 0;
+// btnShowLogin.addEventListener('click', function() {
+//     // If registration is showing, fade it out and show login
+//     if (divRegistration.style.display === 'flex' || divRegistration.style.opacity === '1') {
+//         divRegistration.style.transition = 'opacity 0.5s ease';
+//         divRegistration.style.opacity = 0;
 
-        setTimeout(() => {
-            divRegistration.style.display = 'none';  // Hide registration form after fade-out
+//         setTimeout(() => {
+//             divRegistration.style.display = 'none';  // Hide registration form after fade-out
 
-            // Now show and fade in the login form
-            divLogin.style.display = 'flex';
-            setTimeout(() => {
-                divLogin.style.opacity = 1;  // Fade in login form
-            }, 10);
-        }, 500);  // Wait for registration fade-out before showing login
-    } else {
-        // If registration isn't showing, just fade in login
-        divLogin.style.display = 'flex';
-        setTimeout(() => {
-            divLogin.style.opacity = 1;  // Fade in login form
-        }, 10);
-    }
+//             // Now show and fade in the login form
+//             divLogin.style.display = 'flex';
+//             setTimeout(() => {
+//                 divLogin.style.opacity = 1;  // Fade in login form
+//             }, 10);
+//         }, 500);  // Wait for registration fade-out before showing login
+//     } else {
+//         // If registration isn't showing, just fade in login
+//         divLogin.style.display = 'flex';
+//         setTimeout(() => {
+//             divLogin.style.opacity = 1;  // Fade in login form
+//         }, 10);
+//     }
 
-    document.title = "Smart Chicken Coop | Login";
-});
+//     document.title = "Smart Chicken Coop | Login";
+// });
 
 // "Show Registration" button fades div in click, fades out login form, and sets title
-document.getElementById('btnShowRegistration').addEventListener('click', function() {
-    // Fade out login form (if it is visible)
-    if (divLogin.style.display === 'flex' || divLogin.style.opacity === '1') {
-        divLogin.style.transition = 'opacity 0.5s ease';
-        divLogin.style.opacity = 0;
+// document.getElementById('btnShowRegistration').addEventListener('click', function() {
+//     // Fade out login form (if it is visible)
+//     if (divLogin.style.display === 'flex' || divLogin.style.opacity === '1') {
+//         divLogin.style.transition = 'opacity 0.5s ease';
+//         divLogin.style.opacity = 0;
 
-        setTimeout(() => {
-            divLogin.style.display = 'none';  // Hide login form after fade out
+//         setTimeout(() => {
+//             divLogin.style.display = 'none';  // Hide login form after fade out
 
-            // Now show and fade in the registration form
-            divRegistration.style.display = 'flex';
-            setTimeout(() => {
-                divRegistration.style.opacity = 1;  // Fade in registration form
-            }, 10);
-        }, 500);  // Wait for login fade-out before showing registration
-    } else {
-        // Fade in registration form if login isn't showing
-        divRegistration.style.display = 'flex';
-        setTimeout(() => {
-            divRegistration.style.opacity = 1;
-        }, 10);
-    }
+//             // Now show and fade in the registration form
+//             divRegistration.style.display = 'flex';
+//             setTimeout(() => {
+//                 divRegistration.style.opacity = 1;  // Fade in registration form
+//             }, 10);
+//         }, 500);  // Wait for login fade-out before showing registration
+//     } else {
+//         // Fade in registration form if login isn't showing
+//         divRegistration.style.display = 'flex';
+//         setTimeout(() => {
+//             divRegistration.style.opacity = 1;
+//         }, 10);
+//     }
 
-    document.title = "Smart Chicken Coop | Registration";
-});
+//     document.title = "Smart Chicken Coop | Registration";
+// });
 
 // "Show Dashboard" button fades out login and registration, shows dashboard, and sets the title
-document.getElementById('btnShowDashboard').addEventListener('click', async function() {
-    // Fade in dashboard 
-    const divDashboard = document.getElementById('divDashboard');
-    divDashboard.style.display = 'flex';
-    divDashboard.style.opacity = 0;
+// document.getElementById('btnShowDashboard').addEventListener('click', async function() {
+//     // Fade in dashboard 
+//     const divDashboard = document.getElementById('divDashboard');
+//     divDashboard.style.display = 'flex';
+//     divDashboard.style.opacity = 0;
     
-    // Get the SessionID from localStorage
-    const sessionID = localStorage.getItem('SessionID');
-    if (sessionID) {
-        try {
-            // Get temperature unit setting
-            const temperatureUnitSetting = await settingsApiHandler('GET', {
-                SessionID: sessionID,
-                setting: 'temperatureUnit'
-            });
+//     // Get the SessionID from localStorage
+//     const sessionID = localStorage.getItem('SessionID');
+//     if (sessionID) {
+//         try {
+//             // Get temperature unit setting
+//             const temperatureUnitSetting = await settingsApiHandler('GET', {
+//                 SessionID: sessionID,
+//                 setting: 'temperatureUnit'
+//             });
 
-            // If setting is Fahrenheit, update the dashboard
-            if (temperatureUnitSetting?.Value === 'Fahrenheit') {
-                updateDashboardTemperatures('Fahrenheit');
-            }
-        } catch (error) {
-            console.error('Error fetching temperature unit setting:', error);
-        }
-    }
+//             // If setting is Fahrenheit, update the dashboard
+//             if (temperatureUnitSetting?.Value === 'Fahrenheit') {
+//                 updateDashboardTemperatures('Fahrenheit');
+//             }
+//         } catch (error) {
+//             console.error('Error fetching temperature unit setting:', error);
+//         }
+//     }
 
-    setTimeout(() => {
-        divDashboard.style.transition = 'opacity 0.5s ease';
-        divDashboard.style.opacity = 1;
-    }, 10);
+//     setTimeout(() => {
+//         divDashboard.style.transition = 'opacity 0.5s ease';
+//         divDashboard.style.opacity = 1;
+//     }, 10);
 
-    document.title = "Smart Chicken Coop | Dashboard";
-});
+//     document.title = "Smart Chicken Coop | Dashboard";
+// });
 
 // The function is triggered by the click event on the "Create Account" button.
 // It validates the input fields, collects their values, and sends a POST request to create a new user account.

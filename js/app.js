@@ -1,7 +1,7 @@
 // Buttons & Forms
-const divRegistration = document.getElementById('divRegistration');
-const divLogin = document.getElementById('divLogin');
-const btnShowLogin = document.getElementById('btnShowLogin');
+// const divRegistration = document.getElementById('divRegistration');
+// const divLogin = document.getElementById('divLogin');
+// const btnShowLogin = document.getElementById('btnShowLogin');
 
 document.addEventListener('DOMContentLoaded', async () => {
     // Check dark mode setting
