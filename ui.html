@@ -316,23 +316,123 @@
 
                 <!-- Door Status Section -->
                 <div class="mb-4">
-                    <h4 class="text-center mb-4">Door Status</h4>
+                    <h4 class="text-center mb-4">Door Control</h4>
                     <div class="row g-4 align-items-center">
-                        <!-- Door Status Display -->
+                        <!-- Door Status and Button -->
                         <div class="col-md-6 text-center">
-                            <h5 class="mb-3">Current Door Status</h5>
+                            <h5 class="mb-3">Door Status</h5>
                             <p id="doorStatus" class="display-6 mb-3">Closed</p>
+                            <button id="btnToggleDoor" type="button" class="btn btn-primary w-100">Open Door</button>
                         </div>
-                        <!-- Door Control Button -->
+                        <!-- Door Schedule -->
+                        <div class="col-md-6">
+                            <h5 class="text-center mb-3">Set Door Schedule</h5>
+                            <form id="doorScheduleForm">
+                                <div class="mb-3">
+                                    <label for="doorOpenTime" class="form-label">Open Time</label>
+                                    <input type="time" id="doorOpenTime" class="form-control">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="doorCloseTime" class="form-label">Close Time</label>
+                                    <input type="time" id="doorCloseTime" class="form-control">
+                                </div>
+                                <button id="btnSetDoorSchedule" type="button" class="btn btn-primary w-100">Set Schedule</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <hr class="my-4" style="border-width: 3px; border-color: #000;">
+                <div class="mt-4">
+                    <h4 class="text-center mb-4">Live Feed</h4>
+                    <div class="row justify-content-center">
+                        <!-- First Video -->
+                        <div class="col-md-6">
+                            <div class="card mx-auto" style="max-width: 720px;">
+                                <div class="card-body text-center">
+                                    <iframe 
+                                        width="100%" 
+                                        height="235" 
+                                        src="https://www.youtube.com/embed/70IqKloH-mw?autoplay=1" 
+                                        title="YouTube video player" 
+                                        frameborder="0" 
+                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                                        allowfullscreen>
+                                    </iframe>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Second Video -->
+                        <div class="col-md-6">
+                            <div class="card mx-auto" style="max-width: 720px;">
+                                <div class="card-body text-center">
+                                    <iframe 
+                                        width="100%" 
+                                        height="235" 
+                                        src="https://www.youtube.com/embed/vj_VsVYTU-0?autoplay=1" 
+                                        title="YouTube video player" 
+                                        frameborder="0" 
+                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                                        allowfullscreen>
+                                    </iframe>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <hr class="my-4" style="border-width: 3px; border-color: #000;">
+                <div class="mb-4">
+                    <h4 class="text-center mb-4">Feed and Water Monitor</h4>
+                    <div class="row g-4 align-items-center">
+                        <!-- Feed Level -->
                         <div class="col-md-6 text-center">
-                            <h5 class="mb-3">Control Door</h5>
-                            <button id="btnToggleDoor" type="button" class="btn btn-primary">Open Door</button>
+                            <h5 class="mb-3">Feed Level</h5>
+                            <div class="progress" style="height: 30px;">
+                                <div id="feedLevel" class="progress-bar bg-success" role="progressbar" style="width: 100%;" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100">100%</div>
+                            </div>
+                        </div>
+                        <!-- Water Level -->
+                        <div class="col-md-6 text-center">
+                            <h5 class="mb-3">Water Level</h5>
+                            <div class="progress" style="height: 30px;">
+                                <div id="waterLevel" class="progress-bar bg-success" role="progressbar" style="width: 100%;" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100">100%</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <hr class="my-4" style="border-width: 3px; border-color: #000;">
+                <div class="mb-4">
+                    <h4 class="text-center mb-4">Light Control</h4>
+                    <div class="row g-4 align-items-center">
+                        <!-- Light Bulb Control -->
+                        <div class="col-md-6 text-center">
+                            <h5 class="mb-3">Light Status</h5>
+                            <i id="lightBulbIcon" class="fas fa-lightbulb fa-5x text-dark" style="cursor: pointer;"></i>
+                            <p id="lightStatus" class="mt-2">Off</p>
+                            <button id="btnToggleLight" type="button" class="btn btn-primary mt-3">Toggle Light</button>
+                        </div>
+                        <!-- Light Schedule -->
+                        <div class="col-md-6">
+                            <h5 class="text-center mb-3">Set Light Schedule</h5>
+                            <form id="lightScheduleForm">
+                                <div class="mb-3">
+                                    <label for="lightOnTime" class="form-label">Turn On Time</label>
+                                    <input type="time" id="lightOnTime" class="form-control">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="lightOffTime" class="form-label">Turn Off Time</label>
+                                    <input type="time" id="lightOffTime" class="form-control">
+                                </div>
+                                <button id="btnSetSchedule" type="button" class="btn btn-primary w-100">Set Schedule</button>
+                            </form>
                         </div>
                     </div>
                 </div>
             </div>
+            
         </form>
+        
     </div>
+    <div style="height: 50px;"></div>
 </body>
 
 <!-- Libraries -->

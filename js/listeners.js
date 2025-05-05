@@ -1247,3 +1247,162 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Fetch weather data immediately on page load
     fetchWeatherData();
 });
+document.addEventListener('DOMContentLoaded', () => {
+    const feedLevelElement = document.getElementById('feedLevel');
+    const waterLevelElement = document.getElementById('waterLevel');
+
+    // Function to update levels
+    function updateLevels(feedLevel, waterLevel) {
+        // Update feed level
+        feedLevelElement.style.width = `${feedLevel}%`;
+        feedLevelElement.setAttribute('aria-valuenow', feedLevel);
+        feedLevelElement.textContent = `${feedLevel}%`;
+        feedLevelElement.classList.remove('bg-success', 'bg-warning', 'bg-danger');
+        feedLevelElement.classList.add(feedLevel < 10 ? 'bg-danger' : feedLevel < 30 ? 'bg-warning' : 'bg-success');
+
+        // Update water level
+        waterLevelElement.style.width = `${waterLevel}%`;
+        waterLevelElement.setAttribute('aria-valuenow', waterLevel);
+        waterLevelElement.textContent = `${waterLevel}%`;
+        waterLevelElement.classList.remove('bg-success', 'bg-warning', 'bg-danger');
+        waterLevelElement.classList.add(waterLevel < 10 ? 'bg-danger' : waterLevel < 30 ? 'bg-warning' : 'bg-success');
+
+        // Trigger alerts if levels are below 10%
+        if (feedLevel < 10) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Low Feed Level',
+                text: 'Feed level is below 10%. Please refill the feed.',
+            });
+        }
+
+        if (waterLevel < 10) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Low Water Level',
+                text: 'Water level is below 10%. Please refill the water.',
+            });
+        }
+    }
+
+});
+document.addEventListener('DOMContentLoaded', () => {
+    const lightBulbIcon = document.getElementById('lightBulbIcon');
+    const lightStatus = document.getElementById('lightStatus');
+    const btnToggleLight = document.getElementById('btnToggleLight');
+    const btnSetSchedule = document.getElementById('btnSetSchedule');
+    const lightOnTimeInput = document.getElementById('lightOnTime');
+    const lightOffTimeInput = document.getElementById('lightOffTime');
+
+    let lightIsOn = false; // Track light state
+    let lightSchedule = { onTime: null, offTime: null }; // Track schedule
+
+    // Toggle Light
+    btnToggleLight.addEventListener('click', () => {
+        lightIsOn = !lightIsOn;
+        lightBulbIcon.classList.toggle('text-warning', lightIsOn); // Yellow when on
+        lightBulbIcon.classList.toggle('text-dark', !lightIsOn); // Dark when off
+        lightStatus.textContent = lightIsOn ? 'On' : 'Off';
+    });
+
+    // Set Light Schedule
+    btnSetSchedule.addEventListener('click', () => {
+        const onTime = lightOnTimeInput.value;
+        const offTime = lightOffTimeInput.value;
+
+        if (!onTime || !offTime) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Invalid Schedule',
+                text: 'Please set both On and Off times.',
+            });
+            return;
+        }
+
+        lightSchedule.onTime = onTime;
+        lightSchedule.offTime = offTime;
+
+        Swal.fire({
+            icon: 'success',
+            title: 'Schedule Set',
+            text: `Light will turn on at ${onTime} and off at ${offTime}.`,
+        });
+    });
+
+    // Check Schedule Every Minute
+    setInterval(() => {
+        const currentTime = new Date().toTimeString().slice(0, 5); // Get current time in HH:MM format
+
+        if (lightSchedule.onTime === currentTime && !lightIsOn) {
+            lightIsOn = true;
+            lightBulbIcon.classList.add('text-warning');
+            lightBulbIcon.classList.remove('text-dark');
+            lightStatus.textContent = 'On';
+        }
+
+        if (lightSchedule.offTime === currentTime && lightIsOn) {
+            lightIsOn = false;
+            lightBulbIcon.classList.add('text-dark');
+            lightBulbIcon.classList.remove('text-warning');
+            lightStatus.textContent = 'Off';
+        }
+    }, 60000); // Check every minute
+});
+document.addEventListener('DOMContentLoaded', () => {
+    const doorStatusElement = document.getElementById('doorStatus');
+    const btnToggleDoor = document.getElementById('btnToggleDoor');
+    const btnSetDoorSchedule = document.getElementById('btnSetDoorSchedule');
+    const doorOpenTimeInput = document.getElementById('doorOpenTime');
+    const doorCloseTimeInput = document.getElementById('doorCloseTime');
+
+    let doorIsOpen = false; // Track door state
+    let doorSchedule = { openTime: null, closeTime: null }; // Track schedule
+
+    // Toggle Door
+    btnToggleDoor.addEventListener('click', () => {
+        doorIsOpen = !doorIsOpen;
+        doorStatusElement.textContent = doorIsOpen ? 'Open' : 'Closed';
+        btnToggleDoor.textContent = doorIsOpen ? 'Close Door' : 'Open Door';
+    });
+
+    // Set Door Schedule
+    btnSetDoorSchedule.addEventListener('click', () => {
+        const openTime = doorOpenTimeInput.value;
+        const closeTime = doorCloseTimeInput.value;
+
+        if (!openTime || !closeTime) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Invalid Schedule',
+                text: 'Please set both Open and Close times.',
+            });
+            return;
+        }
+
+        doorSchedule.openTime = openTime;
+        doorSchedule.closeTime = closeTime;
+
+        Swal.fire({
+            icon: 'success',
+            title: 'Schedule Set',
+            text: `Door will open at ${openTime} and close at ${closeTime}.`,
+        });
+    });
+
+    // Check Schedule Every Minute
+    setInterval(() => {
+        const currentTime = new Date().toTimeString().slice(0, 5); // Get current time in HH:MM format
+
+        if (doorSchedule.openTime === currentTime && !doorIsOpen) {
+            doorIsOpen = true;
+            doorStatusElement.textContent = 'Open';
+            btnToggleDoor.textContent = 'Close Door';
+        }
+
+        if (doorSchedule.closeTime === currentTime && doorIsOpen) {
+            doorIsOpen = false;
+            doorStatusElement.textContent = 'Closed';
+            btnToggleDoor.textContent = 'Open Door';
+        }
+    }, 60000); // Check every minute
+});
