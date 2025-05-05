@@ -816,16 +816,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Fetch existing egg data from the API
     async function fetchEggData() {
         try {
-            const response = await fetch(`https://simplecoop.swollenhippo.com/eggs.php?SessionID=${sessionID}&days=30`, {
-                method: 'GET',
-                headers: { 'Content-Type': 'application/json' }
+            // Use the eggApiHandler to fetch egg data
+            const eggData = await eggApiHandler('GET', {
+                SessionID: sessionID,
+                days: 30
             });
 
-            const result = await response.json();
+            console.log('Egg data:', eggData.Outcome);
 
-            if (Array.isArray(result)) {
+            // Check if eggData.Harvested exists and is an array
+            if (eggData && eggData.Harvested && Array.isArray(eggData.Harvested)) {
                 // Populate the chart with existing data
-                result.forEach(entry => {
+                eggData.Harvested.forEach(entry => {
                     const date = new Date(entry.observationDateTime).toLocaleDateString();
                     const labelIndex = eggChart.data.labels.indexOf(date);
 
@@ -840,12 +842,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
 
                 // Update the egg counter
-                const totalEggs = result.reduce((sum, entry) => sum + entry.eggs, 0);
+                const totalEggs = eggData.Harvested.reduce((sum, entry) => sum + entry.eggs, 0);
                 eggCounter.textContent = totalEggs;
 
                 eggChart.update();
             } else {
-                console.warn('No egg data found.');
+                console.warn('No egg data found or invalid format.');
             }
         } catch (error) {
             console.error('Error fetching egg data:', error);
@@ -882,20 +884,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const newCount = currentCount + numEggs;
 
                 try {
-                    // Add the new egg count to the backend
-                    const response = await fetch('https://simplecoop.swollenhippo.com/eggs.php', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            SessionID: sessionID,
-                            observationDateTime: new Date().toISOString(),
-                            eggs: numEggs
-                        })
+                    // Add the new egg count to the backend using eggApiHandler
+                    const eggsData = await eggApiHandler('POST', {
+                        SessionID: sessionID,
+                        observationDateTime: new Date().toISOString(),
+                        eggs: numEggs
                     });
 
-                    const result = await response.json();
-
-                    if (result.Outcome === 'Success') {
+                    if (eggsData) {
                         // Update the egg counter
                         eggCounter.textContent = newCount;
 

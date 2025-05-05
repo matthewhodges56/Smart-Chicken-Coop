@@ -293,3 +293,63 @@ async function settingsApiHandler(method, data = {}) {
         };
     }
 }
+
+/**
+ * Handles all egg-related API operations with the eggs.php endpoint.
+ * 
+ * @param {string} method - HTTP method ('GET', 'POST', 'PUT', 'DELETE')
+ * @param {Object} data - Data to send with the request (varies by method)
+ * @returns {Promise<Object>} - JSON response from the API
+ * 
+ * Usage examples:
+ * - Add harvested eggs: eggApiHandler('POST', {SessionID, observationDateTime, eggs})
+ * - Update egg log: eggApiHandler('PUT', {SessionID, logID})
+ * - Delete all egg logs: eggApiHandler('DELETE', {SessionID})
+ * - Get egg logs: eggApiHandler('GET', {SessionID, days})
+ */
+async function eggApiHandler(method, data = {}) {
+    try {
+        // Base URL for the endpoint
+        let url = 'https://simplecoop.swollenhippo.com/eggs.php';
+
+        // For GET, add query parameters
+        if (method === 'GET' && data.SessionID && data.days) {
+            url = `${url}?SessionID=${encodeURIComponent(data.SessionID)}&days=${encodeURIComponent(data.days)}`;
+        }
+
+        // Prepare request options
+        const options = {
+            method: method,
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            }
+        };
+
+        // For POST, PUT, and DELETE, format the data as URL parameters
+        if ((method === 'POST' || method === 'PUT' || method === 'DELETE') && Object.keys(data).length > 0) {
+            const formData = new URLSearchParams();
+            Object.entries(data).forEach(([key, value]) => {
+                formData.append(key, value);
+            });
+            options.body = formData.toString();
+        }
+
+        // Make the API call
+        const response = await fetch(url, options);
+
+        // Log the raw response for debugging
+        const responseText = await response.text();
+        console.log(`${method} Egg API Raw Response:`, responseText);
+
+        // Parse and return the JSON response
+        const jsonResponse = JSON.parse(responseText);
+        return jsonResponse;
+
+    } catch (error) {
+        console.error(`Error in ${method} egg operation:`, error);
+        return { 
+            Error: error.message,
+            Outcome: `Error: ${error.message}`
+        };
+    }
+}
