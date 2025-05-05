@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!loginEmailFeedback) {
             loginEmailFeedback = document.createElement('div');
             loginEmailFeedback.className = 'invalid-feedback';
-            loginEmailFeedback.textContent = 'Please enter a login email address.';
+            loginEmailFeedback.textContent = 'Invalid email.';
             emailInput.parentNode.appendChild(loginEmailFeedback);
         }
 
