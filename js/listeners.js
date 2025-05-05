@@ -740,66 +740,49 @@ document.getElementById('btnCloseSettings').addEventListener('click', () => {
 });
 
 // Toggle door button event listener
-document.getElementById('btnToggleDoor').addEventListener('click', async () => {
+document.getElementById('btnToggleDoor').addEventListener('click', () => {
     const doorStatusElement = document.getElementById('doorStatus');
     const button = document.getElementById('btnToggleDoor');
-    const sessionID = localStorage.getItem('SessionID');
 
-    if (!sessionID) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'No session found. Please log in again.',
-        });
-        return;
-    }
+    // Get the current door status from localStorage
+    const currentStatus = localStorage.getItem('doorStatus') || 'Closed';
 
-    try {
-        // Determine the new door state
-        const newStatus = doorStatusElement.textContent === 'Closed' ? 'Open' : 'Closed';
+    // Toggle the door status
+    const newStatus = currentStatus === 'Closed' ? 'Open' : 'Closed';
 
-        // Update the door status on the backend
-        const response = await fetch('settings.php', {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                SessionID: sessionID,
-                setting: 'doorStatus',
-                value: newStatus,
-            }),
-        });
+    // Update localStorage
+    localStorage.setItem('doorStatus', newStatus);
 
-        const result = await response.json();
+    // Update the UI
+    doorStatusElement.textContent = newStatus;
+    button.textContent = newStatus === 'Closed' ? 'Open Door' : 'Close Door';
 
-        if (result.Outcome === 'Success') {
-            // Update the UI
-            doorStatusElement.textContent = newStatus;
-            button.textContent = newStatus === 'Closed' ? 'Open Door' : 'Close Door';
-
-            Swal.fire({
-                icon: 'success',
-                title: 'Door Status Updated',
-                text: `The door is now ${newStatus}.`,
-                timer: 2000,
-                showConfirmButton: false,
-            });
-        } else {
-            throw new Error('Failed to update door status.');
-        }
-    } catch (error) {
-        console.error('Error updating door status:', error);
-        Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'An error occurred while updating the door status. Please try again later.',
-        });
-    }
+    Swal.fire({
+        icon: 'success',
+        title: 'Door Status Updated',
+        text: `The door is now ${newStatus}.`,
+        timer: 2000,
+        showConfirmButton: false,
+    });
 });
 
 // Fetch the current door status on page load
-document.addEventListener('DOMContentLoaded', async () => {
+document.addEventListener('DOMContentLoaded', () => {
     const doorStatusElement = document.getElementById('doorStatus');
     const button = document.getElementById('btnToggleDoor');
+
+    // Get the current door status from localStorage
+    const currentStatus = localStorage.getItem('doorStatus') || 'Closed';
+
+    // Update the UI
+    doorStatusElement.textContent = currentStatus;
+    button.textContent = currentStatus === 'Closed' ? 'Open Door' : 'Close Door';
+});
+
+document.addEventListener('DOMContentLoaded', async () => {
+    const eggCounter = document.getElementById('eggCounter');
+    const btnAddEggs = document.getElementById('btnAddEggs');
+    const ctx = document.getElementById('eggChart').getContext('2d');
     const sessionID = localStorage.getItem('SessionID');
 
     if (!sessionID) {
@@ -807,29 +790,425 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
-    try {
-        // Fetch the current door status
-        const response = await fetch('settings.php', {
-            method: 'GET',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                SessionID: sessionID,
-                setting: 'doorStatus',
-            }),
-        });
-
-        const result = await response.json();
-
-        if (result.length > 0) {
-            const currentStatus = result[0].value || 'Closed';
-            doorStatusElement.textContent = currentStatus;
-            button.textContent = currentStatus === 'Closed' ? 'Open Door' : 'Close Door';
-        } else {
-            console.warn('No door status found. Defaulting to "Closed".');
-            doorStatusElement.textContent = 'Closed';
-            button.textContent = 'Open Door';
+    // Initialize the chart
+    const eggChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: [], // Dates
+            datasets: [{
+                label: 'Eggs Harvested',
+                data: [], // Number of eggs
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
         }
-    } catch (error) {
-        console.error('Error fetching door status:', error);
+    });
+
+    // Fetch existing egg data from the API
+    async function fetchEggData() {
+        try {
+            const response = await fetch(`https://simplecoop.swollenhippo.com/eggs.php?SessionID=${sessionID}&days=30`, {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            const result = await response.json();
+
+            if (Array.isArray(result)) {
+                // Populate the chart with existing data
+                result.forEach(entry => {
+                    const date = new Date(entry.observationDateTime).toLocaleDateString();
+                    const labelIndex = eggChart.data.labels.indexOf(date);
+
+                    if (labelIndex === -1) {
+                        // Add a new label and data point
+                        eggChart.data.labels.push(date);
+                        eggChart.data.datasets[0].data.push(entry.eggs);
+                    } else {
+                        // Increment the existing data point
+                        eggChart.data.datasets[0].data[labelIndex] += entry.eggs;
+                    }
+                });
+
+                // Update the egg counter
+                const totalEggs = result.reduce((sum, entry) => sum + entry.eggs, 0);
+                eggCounter.textContent = totalEggs;
+
+                eggChart.update();
+            } else {
+                console.warn('No egg data found.');
+            }
+        } catch (error) {
+            console.error('Error fetching egg data:', error);
+        }
     }
+
+    // Call fetchEggData on page load
+    await fetchEggData();
+
+    // Add eggs functionality
+    btnAddEggs.addEventListener('click', () => {
+        Swal.fire({
+            title: 'Add Eggs',
+            input: 'number',
+            inputLabel: 'Enter the number of eggs',
+            inputPlaceholder: 'e.g., 5',
+            inputAttributes: {
+                min: 1,
+                step: 1
+            },
+            showCancelButton: true,
+            confirmButtonText: 'Add',
+            cancelButtonText: 'Cancel',
+            preConfirm: (value) => {
+                if (!value || value <= 0) {
+                    Swal.showValidationMessage('Please enter a valid number of eggs.');
+                }
+                return value;
+            }
+        }).then(async (result) => {
+            if (result.isConfirmed) {
+                const numEggs = parseInt(result.value, 10);
+                const currentCount = parseInt(eggCounter.textContent, 10) || 0;
+                const newCount = currentCount + numEggs;
+
+                try {
+                    // Add the new egg count to the backend
+                    const response = await fetch('https://simplecoop.swollenhippo.com/eggs.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            SessionID: sessionID,
+                            observationDateTime: new Date().toISOString(),
+                            eggs: numEggs
+                        })
+                    });
+
+                    const result = await response.json();
+
+                    if (result.Outcome === 'Success') {
+                        // Update the egg counter
+                        eggCounter.textContent = newCount;
+
+                        // Update the chart
+                        const today = new Date().toLocaleDateString(); // Use today's date as the label
+                        const labelIndex = eggChart.data.labels.indexOf(today);
+
+                        if (labelIndex === -1) {
+                            // Add a new label and data point
+                            eggChart.data.labels.push(today);
+                            eggChart.data.datasets[0].data.push(numEggs);
+                        } else {
+                            // Increment the existing data point
+                            eggChart.data.datasets[0].data[labelIndex] += numEggs;
+                        }
+
+                        eggChart.update();
+
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Eggs Added',
+                            text: `${numEggs} eggs have been added to the chart.`,
+                            timer: 2000,
+                            showConfirmButton: false
+                        });
+                    } else {
+                        throw new Error('Failed to add egg.');
+                    }
+                } catch (error) {
+                    console.error('Error adding egg:', error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'An error occurred while adding the egg. Please try again later.',
+                    });
+                }
+            }
+        });
+    });
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+    const heaterStatus = document.getElementById('heaterStatus');
+    const fanStatus = document.getElementById('fanStatus');
+    const btnSetHeaterThreshold = document.getElementById('btnSetHeaterThreshold');
+    const btnSetFanThreshold = document.getElementById('btnSetFanThreshold');
+    const autoHeaterThreshold = document.getElementById('autoHeaterThreshold');
+    const autoFanThreshold = document.getElementById('autoFanThreshold');
+
+    // Load thresholds from localStorage or set defaults
+    autoHeaterThreshold.value = localStorage.getItem('heaterThreshold') || 18; // Default: 18°C
+    autoFanThreshold.value = localStorage.getItem('fanThreshold') || 25; // Default: 25°C
+
+    // Set Heater Threshold
+    btnSetHeaterThreshold.addEventListener('click', () => {
+        const threshold = autoHeaterThreshold.value;
+
+        if (!threshold) {
+            alert('Please enter a valid heater threshold.');
+            return;
+        }
+
+        // Save the threshold to localStorage
+        localStorage.setItem('heaterThreshold', threshold);
+
+        Swal.fire({
+            icon: 'success',
+            title: 'Heater Threshold Set',
+            text: `Heater will turn on below ${threshold}°C.`,
+            timer: 2000,
+            showConfirmButton: false,
+        });
+    });
+
+    // Set Fan Threshold
+    btnSetFanThreshold.addEventListener('click', () => {
+        const threshold = autoFanThreshold.value;
+
+        if (!threshold) {
+            alert('Please enter a valid fan threshold.');
+            return;
+        }
+
+        // Save the threshold to localStorage
+        localStorage.setItem('fanThreshold', threshold);
+
+        Swal.fire({
+            icon: 'success',
+            title: 'Fan Threshold Set',
+            text: `Fan will turn on above ${threshold}°C.`,
+            timer: 2000,
+            showConfirmButton: false,
+        });
+    });
+
+    // Monitor Temperature and Automatically Control Heater/Fan
+    setInterval(() => {
+        const heaterThreshold = parseFloat(localStorage.getItem('heaterThreshold') || 18); // Default: 18°C
+        const fanThreshold = parseFloat(localStorage.getItem('fanThreshold') || 25); // Default: 25°C
+        const currentTemp = parseFloat(document.getElementById('temperature').textContent);
+
+        // Hysteresis margins
+        const hysteresisMargin = 1; // 1°C buffer
+
+        // Heater logic with hysteresis
+        if (currentTemp < heaterThreshold - hysteresisMargin && heaterStatus.textContent === 'Off') {
+            heaterStatus.textContent = 'On';
+            Swal.fire({
+                icon: 'info',
+                title: 'Heater Turned On',
+                text: `The heater was turned on because the temperature dropped below ${heaterThreshold - hysteresisMargin}°C.`,
+                timer: 2000,
+                showConfirmButton: false,
+            });
+        }
+
+        if (currentTemp >= heaterThreshold + hysteresisMargin && heaterStatus.textContent === 'On') {
+            heaterStatus.textContent = 'Off';
+            Swal.fire({
+                icon: 'info',
+                title: 'Heater Turned Off',
+                text: `The heater was turned off because the temperature rose above ${heaterThreshold + hysteresisMargin}°C.`,
+                timer: 2000,
+                showConfirmButton: false,
+            });
+        }
+
+        // Fan logic with hysteresis
+        if (currentTemp > fanThreshold + hysteresisMargin && fanStatus.textContent === 'Off') {
+            fanStatus.textContent = 'On';
+            Swal.fire({
+                icon: 'info',
+                title: 'Fan Turned On',
+                text: `The fan was turned on because the temperature exceeded ${fanThreshold + hysteresisMargin}°C.`,
+                timer: 2000,
+                showConfirmButton: false,
+            });
+        }
+
+        if (currentTemp <= fanThreshold - hysteresisMargin && fanStatus.textContent === 'On') {
+            fanStatus.textContent = 'Off';
+            Swal.fire({
+                icon: 'info',
+                title: 'Fan Turned Off',
+                text: `The fan was turned off because the temperature dropped below ${fanThreshold - hysteresisMargin}°C.`,
+                timer: 2000,
+                showConfirmButton: false,
+            });
+        }
+    }, 5000); // Check every 5 seconds
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+    const heaterStatusElement = document.getElementById('heaterStatus');
+    const fanStatusElement = document.getElementById('fanStatus');
+    const btnToggleHeater = document.getElementById('btnToggleHeater');
+    const btnToggleFan = document.getElementById('btnToggleFan');
+
+    // Load initial statuses from localStorage or set defaults
+    const heaterStatus = localStorage.getItem('heaterStatus') || 'Off';
+    const fanStatus = localStorage.getItem('fanStatus') || 'Off';
+
+    // Update the UI with the initial statuses
+    heaterStatusElement.textContent = heaterStatus;
+    btnToggleHeater.textContent = heaterStatus === 'Off' ? 'Turn On Heater' : 'Turn Off Heater';
+
+    fanStatusElement.textContent = fanStatus;
+    btnToggleFan.textContent = fanStatus === 'Off' ? 'Turn On Fan' : 'Turn Off Fan';
+
+    // Toggle Heater
+    btnToggleHeater.addEventListener('click', () => {
+        const currentStatus = localStorage.getItem('heaterStatus') || 'Off';
+        const newStatus = currentStatus === 'Off' ? 'On' : 'Off';
+
+        // Update localStorage and UI
+        localStorage.setItem('heaterStatus', newStatus);
+        heaterStatusElement.textContent = newStatus;
+        btnToggleHeater.textContent = newStatus === 'Off' ? 'Turn On Heater' : 'Turn Off Heater';
+
+        Swal.fire({
+            icon: 'success',
+            title: 'Heater Status Updated',
+            text: `The heater is now ${newStatus}.`,
+            timer: 2000,
+            showConfirmButton: false,
+        });
+    });
+
+    // Toggle Fan
+    btnToggleFan.addEventListener('click', () => {
+        const currentStatus = localStorage.getItem('fanStatus') || 'Off';
+        const newStatus = currentStatus === 'Off' ? 'On' : 'Off';
+
+        // Update localStorage and UI
+        localStorage.setItem('fanStatus', newStatus);
+        fanStatusElement.textContent = newStatus;
+        btnToggleFan.textContent = newStatus === 'Off' ? 'Turn On Fan' : 'Turn Off Fan';
+
+        Swal.fire({
+            icon: 'success',
+            title: 'Fan Status Updated',
+            text: `The fan is now ${newStatus}.`,
+            timer: 2000,
+            showConfirmButton: false,
+        });
+    });
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+    const ctx = document.getElementById('environmentChart').getContext('2d');
+    const temperatureElement = document.getElementById('temperature');
+    const humidityElement = document.getElementById('humidity');
+
+    // Initialize the environment chart
+    const environmentChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: [], // Timestamps
+            datasets: [
+                {
+                    label: 'Temperature (°C)',
+                    data: [], // Temperature values
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                    borderWidth: 2,
+                    tension: 0.4,
+                },
+                {
+                    label: 'Humidity (%)',
+                    data: [], // Humidity values
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                    borderWidth: 2,
+                    tension: 0.4,
+                },
+            ],
+        },
+        options: {
+            responsive: true,
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Time',
+                    },
+                },
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Value',
+                    },
+                },
+            },
+        },
+    });
+
+    // Function to add data to the chart
+    function addEnvironmentData(temperature, humidity) {
+        const now = new Date().toLocaleTimeString(); // Current time as label
+
+        // Add the new data to the chart
+        environmentChart.data.labels.push(now);
+        environmentChart.data.datasets[0].data.push(temperature); // Add temperature
+        environmentChart.data.datasets[1].data.push(humidity); // Add humidity
+
+        // Limit the number of data points to 10 for better readability
+        if (environmentChart.data.labels.length > 10) {
+            environmentChart.data.labels.shift();
+            environmentChart.data.datasets[0].data.shift();
+            environmentChart.data.datasets[1].data.shift();
+        }
+
+        // Update the chart
+        environmentChart.update();
+    }
+
+    // Function to fetch weather data for Nashville, TN
+    async function fetchWeatherData() {
+        const latitude = 36.1627; // Latitude for Nashville
+        const longitude = -86.7816; // Longitude for Nashville
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true&humidity=true`;
+
+        try {
+            const response = await fetch(url);
+            const data = await response.json();
+
+            if (response.ok && data.current_weather) {
+                const temperature = data.current_weather.temperature; // Temperature in °C
+                const humidity = data.current_weather.relativehumidity || 0; // Humidity in %
+                const observationTime = data.current_weather.time; // Observation time from API
+
+                // Update the temperature and humidity display
+                temperatureElement.textContent = `${temperature.toFixed(1)} °C`;
+                humidityElement.textContent = `${humidity.toFixed(1)} %`;
+
+                // Update the "Last Observation" field
+                const formattedTime = new Date(observationTime).toLocaleString(); // Format the time
+                document.getElementById('observationDateTime').textContent = formattedTime;
+
+                // Add the data to the chart
+                addEnvironmentData(temperature, humidity);
+            } else {
+                console.error('Error fetching weather data:', data);
+            }
+        } catch (error) {
+            console.error('Error fetching weather data:', error);
+        }
+    }
+
+    // Fetch weather data every 5 minutes
+    setInterval(fetchWeatherData, 300000); // 300,000 ms = 5 minutes
+
+    // Fetch weather data immediately on page load
+    fetchWeatherData();
 });
