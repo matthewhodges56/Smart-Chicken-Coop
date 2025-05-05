@@ -3,7 +3,25 @@ const divRegistration = document.getElementById('divRegistration');
 const divLogin = document.getElementById('divLogin');
 const btnShowLogin = document.getElementById('btnShowLogin');
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    // Check dark mode setting
+    const sessionID = localStorage.getItem('SessionID');
+    if (sessionID) {
+        try {
+            const darkModeSetting = await settingsApiHandler('GET', {
+                SessionID: sessionID,
+                setting: 'darkMode'
+            });
+
+            // If dark mode is enabled, apply the class
+            if (darkModeSetting?.Value === 'enabled') {
+                document.body.classList.add('dark-mode');
+            }
+        } catch (error) {
+            console.error('Error fetching dark mode setting:', error);
+        }
+    }
+
     $('#selState').select2( {
         theme: "bootstrap-5",
         width: $( this ).data( 'width' ) ? $( this ).data( 'width' ) : $( this ).hasClass( 'w-100' ) ? '100%' : 'style',

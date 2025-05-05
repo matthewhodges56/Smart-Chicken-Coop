@@ -94,16 +94,35 @@ document.getElementById('btnShowRegistration').addEventListener('click', functio
 });
 
 // "Show Dashboard" button fades out login and registration, shows dashboard, and sets the title
-document.getElementById('btnShowDashboard').addEventListener('click', function() {
+document.getElementById('btnShowDashboard').addEventListener('click', async function() {
     // Fade in dashboard 
     const divDashboard = document.getElementById('divDashboard');
     divDashboard.style.display = 'flex';
     divDashboard.style.opacity = 0;
+    
+    // Get the SessionID from localStorage
+    const sessionID = localStorage.getItem('SessionID');
+    if (sessionID) {
+        try {
+            // Get temperature unit setting
+            const temperatureUnitSetting = await settingsApiHandler('GET', {
+                SessionID: sessionID,
+                setting: 'temperatureUnit'
+            });
+
+            // If setting is Fahrenheit, update the dashboard
+            if (temperatureUnitSetting?.Value === 'Fahrenheit') {
+                updateDashboardTemperatures('Fahrenheit');
+            }
+        } catch (error) {
+            console.error('Error fetching temperature unit setting:', error);
+        }
+    }
+
     setTimeout(() => {
         divDashboard.style.transition = 'opacity 0.5s ease';
         divDashboard.style.opacity = 1;
-    }
-    , 10);
+    }, 10);
 
     document.title = "Smart Chicken Coop | Dashboard";
 });
@@ -243,12 +262,6 @@ document.getElementById('btnCreateAccount').addEventListener('click', async () =
                             SessionID: loginData.SessionID,
                             setting: 'temperatureUnit',
                             value: 'Celsius'
-                        });
-
-                        await settingsApiHandler('POST', {
-                            SessionID: loginData.SessionID,
-                            setting: 'humidityUnit',
-                            value: 'Percentage'
                         });
 
                         console.log('Default settings created successfully.');
@@ -547,21 +560,17 @@ document.getElementById('btnSettings').addEventListener('click', async () => {
         // Fetch saved settings from the backend
         const darkModeSetting = await settingsApiHandler('GET', { SessionID: sessionID, setting: 'darkMode' });
         const temperatureUnitSetting = await settingsApiHandler('GET', { SessionID: sessionID, setting: 'temperatureUnit' });
-        const humidityUnitSetting = await settingsApiHandler('GET', { SessionID: sessionID, setting: 'humidityUnit' });
 
         // Update the toggles based on the fetched settings or default values
         const chkDarkMode = document.getElementById('chkDarkMode');
         const chkTemperatureUnit = document.getElementById('chkTemperatureUnit');
-        const chkHumidityUnit = document.getElementById('chkHumidityUnit');
 
-        chkDarkMode.checked = darkModeSetting.Value === 'enabled' || false; // Default: false
-        chkTemperatureUnit.checked = temperatureUnitSetting?.value === 'Fahrenheit' || false; // Default: Celsius
-        chkHumidityUnit.checked = humidityUnitSetting?.value === 'Absolute' || false; // Default: Percentage
+        chkDarkMode.checked = darkModeSetting?.Value === 'enabled' || false; // Default: false
+        chkTemperatureUnit.checked = temperatureUnitSetting?.Value === 'Fahrenheit' || false; // Default: Celsius
 
         // Store the original state of the settings
         chkDarkMode.dataset.originalState = chkDarkMode.checked;
         chkTemperatureUnit.dataset.originalState = chkTemperatureUnit.checked;
-        chkHumidityUnit.dataset.originalState = chkHumidityUnit.checked;
 
     } catch (error) {
         console.error('Error fetching settings:', error);
@@ -609,7 +618,6 @@ document.getElementById('btnSaveSettings').addEventListener('click', async () =>
     // Get the current state of the settings
     const chkDarkMode = document.getElementById('chkDarkMode');
     const chkTemperatureUnit = document.getElementById('chkTemperatureUnit');
-    const chkHumidityUnit = document.getElementById('chkHumidityUnit');
 
     // Get the SessionID from localStorage
     const sessionID = localStorage.getItem('SessionID');
@@ -638,17 +646,9 @@ document.getElementById('btnSaveSettings').addEventListener('click', async () =>
             value: chkTemperatureUnit.checked ? 'Fahrenheit' : 'Celsius',
         });
 
-        // Update Humidity Unit setting
-        await settingsApiHandler('PUT', {
-            SessionID: sessionID,
-            setting: 'humidityUnit',
-            value: chkHumidityUnit.checked ? 'Absolute' : 'Percentage',
-        });
-
         // Save the settings in localStorage
         localStorage.setItem('darkMode', chkDarkMode.checked ? 'enabled' : 'disabled');
         localStorage.setItem('temperatureUnit', chkTemperatureUnit.checked ? 'Fahrenheit' : 'Celsius');
-        localStorage.setItem('humidityUnit', chkHumidityUnit.checked ? 'Absolute' : 'Percentage');
 
         // Apply the dark mode class to the body if enabled
         if (chkDarkMode.checked) {
@@ -662,7 +662,7 @@ document.getElementById('btnSaveSettings').addEventListener('click', async () =>
             icon: 'success',
             title: 'Settings Saved',
             text: 'Your settings have been successfully updated.',
-            timer: 2000,
+            timer: 1000,
             showConfirmButton: false,
         });
 
@@ -684,7 +684,7 @@ document.getElementById('btnSaveSettings').addEventListener('click', async () =>
             if (btnSaveSettings) {
                 btnSaveSettings.disabled = true;
             }
-        }, 2000); // Wait for the notification timer to finish
+        }, 1000); // Wait for the notification timer to finish
     } catch (error) {
         console.error('Error updating settings:', error);
         Swal.fire({
@@ -707,12 +707,10 @@ document.getElementById('btnCloseSettings').addEventListener('click', () => {
     // Restore the original state of the settings
     const chkDarkMode = document.getElementById('chkDarkMode');
     const chkTemperatureUnit = document.getElementById('chkTemperatureUnit');
-    const chkHumidityUnit = document.getElementById('chkHumidityUnit');
 
     // Revert to the original state stored in data attributes
     chkDarkMode.checked = chkDarkMode.dataset.originalState === 'true';
     chkTemperatureUnit.checked = chkTemperatureUnit.dataset.originalState === 'true';
-    chkHumidityUnit.checked = chkHumidityUnit.dataset.originalState === 'true';
 
     // Remove the dark mode class from the body if it was toggled
     if (!chkDarkMode.checked) {
@@ -739,16 +737,26 @@ document.getElementById('btnCloseSettings').addEventListener('click', () => {
     }
 });
 
-// Toggle door button event listener
-document.getElementById('btnToggleDoor').addEventListener('click', () => {
+// Update the door toggle event listener
+btnToggleDoor.addEventListener('click', () => {
+    const doorOpenSound = new Audio('sounds/door-open.mp3');  // Create sound for door opening
+    const doorCloseSound = new Audio('sounds/door-close.mp3'); // Create sound for door closing
+
     const doorStatusElement = document.getElementById('doorStatus');
     const button = document.getElementById('btnToggleDoor');
 
     // Get the current door status from localStorage
     const currentStatus = localStorage.getItem('doorStatus') || 'Closed';
 
-    // Toggle the door status
+    // Determine the new status
     const newStatus = currentStatus === 'Closed' ? 'Open' : 'Closed';
+
+    // Play the appropriate sound based on the new status
+    if (newStatus === 'Open') {
+        doorOpenSound.play();
+    } else {
+        doorCloseSound.play();
+    }
 
     // Update localStorage
     localStorage.setItem('doorStatus', newStatus);
@@ -757,6 +765,7 @@ document.getElementById('btnToggleDoor').addEventListener('click', () => {
     doorStatusElement.textContent = newStatus;
     button.textContent = newStatus === 'Closed' ? 'Open Door' : 'Close Door';
 
+    // Show a success message
     Swal.fire({
         icon: 'success',
         title: 'Door Status Updated',
@@ -819,32 +828,39 @@ document.addEventListener('DOMContentLoaded', async () => {
             // Use the eggApiHandler to fetch egg data
             const eggData = await eggApiHandler('GET', {
                 SessionID: sessionID,
-                days: 30
+                days: 1
             });
-
-            console.log('Egg data:', eggData.Outcome);
-
-            // Check if eggData.Harvested exists and is an array
-            if (eggData && eggData.Harvested && Array.isArray(eggData.Harvested)) {
-                // Populate the chart with existing data
-                eggData.Harvested.forEach(entry => {
-                    const date = new Date(entry.observationDateTime).toLocaleDateString();
-                    const labelIndex = eggChart.data.labels.indexOf(date);
-
-                    if (labelIndex === -1) {
-                        // Add a new label and data point
-                        eggChart.data.labels.push(date);
-                        eggChart.data.datasets[0].data.push(entry.eggs);
-                    } else {
-                        // Increment the existing data point
-                        eggChart.data.datasets[0].data[labelIndex] += entry.eggs;
-                    }
+    
+            // Check if eggData is an array
+            if (Array.isArray(eggData)) {
+                // Get today's date in YYYY-MM-DD format
+                const today = new Date().toISOString().split('T')[0];
+                
+                // Filter entries for today and sum the Harvested eggs
+                const todaysEggs = eggData
+                    .filter(entry => entry.LogDateTime.startsWith(today))
+                    .reduce((sum, entry) => sum + entry.Harvested, 0);
+    
+                // Update the egg counter with today's total
+                eggCounter.textContent = todaysEggs;
+    
+                // Update the chart with combined daily totals
+                const dailyTotals = new Map();
+                eggData.forEach(entry => {
+                    const date = new Date(entry.LogDateTime).toLocaleDateString();
+                    dailyTotals.set(date, (dailyTotals.get(date) || 0) + entry.Harvested);
                 });
-
-                // Update the egg counter
-                const totalEggs = eggData.Harvested.reduce((sum, entry) => sum + entry.eggs, 0);
-                eggCounter.textContent = totalEggs;
-
+    
+                // Clear existing chart data
+                eggChart.data.labels = [];
+                eggChart.data.datasets[0].data = [];
+    
+                // Add the daily totals to the chart
+                dailyTotals.forEach((eggs, date) => {
+                    eggChart.data.labels.push(date);
+                    eggChart.data.datasets[0].data.push(eggs);
+                });
+    
                 eggChart.update();
             } else {
                 console.warn('No egg data found or invalid format.');
@@ -871,6 +887,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             showCancelButton: true,
             confirmButtonText: 'Add',
             cancelButtonText: 'Cancel',
+            // button color should be #eb6863
+            confirmButtonColor: '#eb6863',
             preConfirm: (value) => {
                 if (!value || value <= 0) {
                     Swal.showValidationMessage('Please enter a valid number of eggs.');
@@ -909,6 +927,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                         }
 
                         eggChart.update();
+
+                        // declare chicken sound 
+                        const chickenSound = new Audio('sounds/chicken.mp3');
+                        chickenSound.play();
 
                         Swal.fire({
                             icon: 'success',
@@ -996,9 +1018,13 @@ document.addEventListener('DOMContentLoaded', () => {
         // Hysteresis margins
         const hysteresisMargin = 1; // 1°C buffer
 
+        // In the temperature monitoring interval section:
+
         // Heater logic with hysteresis
         if (currentTemp < heaterThreshold - hysteresisMargin && heaterStatus.textContent === 'Off') {
             heaterStatus.textContent = 'On';
+            // Add this line to update the button text
+            btnToggleHeater.textContent = 'Turn Off Heater';
             Swal.fire({
                 icon: 'info',
                 title: 'Heater Turned On',
@@ -1010,6 +1036,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (currentTemp >= heaterThreshold + hysteresisMargin && heaterStatus.textContent === 'On') {
             heaterStatus.textContent = 'Off';
+            // Add this line to update the button text
+            btnToggleHeater.textContent = 'Turn On Heater';
             Swal.fire({
                 icon: 'info',
                 title: 'Heater Turned Off',
@@ -1022,6 +1050,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // Fan logic with hysteresis
         if (currentTemp > fanThreshold + hysteresisMargin && fanStatus.textContent === 'Off') {
             fanStatus.textContent = 'On';
+            // Add this line to update the button text
+            btnToggleFan.textContent = 'Turn Off Fan';
             Swal.fire({
                 icon: 'info',
                 title: 'Fan Turned On',
@@ -1033,6 +1063,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (currentTemp <= fanThreshold - hysteresisMargin && fanStatus.textContent === 'On') {
             fanStatus.textContent = 'Off';
+            // Add this line to update the button text
+            btnToggleFan.textContent = 'Turn On Fan';
             Swal.fire({
                 icon: 'info',
                 title: 'Fan Turned Off',
@@ -1066,6 +1098,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const currentStatus = localStorage.getItem('heaterStatus') || 'Off';
         const newStatus = currentStatus === 'Off' ? 'On' : 'Off';
 
+        // Play heater sound only when turning heater ON
+        if (currentStatus === 'Off') {
+            const heaterSound = new Audio('sounds/heater.mp3');
+            heaterSound.volume = 0.3; // Set volume to 30%
+            heaterSound.play();
+        }
+
         // Update localStorage and UI
         localStorage.setItem('heaterStatus', newStatus);
         heaterStatusElement.textContent = newStatus;
@@ -1081,23 +1120,33 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Toggle Fan
-    btnToggleFan.addEventListener('click', () => {
-        const currentStatus = localStorage.getItem('fanStatus') || 'Off';
-        const newStatus = currentStatus === 'Off' ? 'On' : 'Off';
+btnToggleFan.addEventListener('click', () => {
+    const currentStatus = localStorage.getItem('fanStatus') || 'Off';
+    const newStatus = currentStatus === 'Off' ? 'On' : 'Off';
 
-        // Update localStorage and UI
-        localStorage.setItem('fanStatus', newStatus);
-        fanStatusElement.textContent = newStatus;
-        btnToggleFan.textContent = newStatus === 'Off' ? 'Turn On Fan' : 'Turn Off Fan';
+    // Play heater sound only when turning fan ON
+    if (currentStatus === 'Off') {
+        const fanSound = new Audio('sounds/fan.mp3');
+        fanSound.volume = 0.3; // Set volume to 30%
+        // set duration of sound to 2 seconds
+        fanSound.currentTime = 0; // Reset to start
+        fanSound.duration = 2; // Set duration to 2 seconds
+        fanSound.play();
+    }
 
-        Swal.fire({
-            icon: 'success',
-            title: 'Fan Status Updated',
-            text: `The fan is now ${newStatus}.`,
-            timer: 2000,
-            showConfirmButton: false,
-        });
+    // Update localStorage and UI
+    localStorage.setItem('fanStatus', newStatus);
+    fanStatusElement.textContent = newStatus;
+    btnToggleFan.textContent = newStatus === 'Off' ? 'Turn On Fan' : 'Turn Off Fan';
+
+    Swal.fire({
+        icon: 'success',
+        title: 'Fan Status Updated',
+        text: `The fan is now ${newStatus}.`,
+        timer: 2000,
+        showConfirmButton: false,
     });
+});
 });
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -1295,6 +1344,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Toggle Light
     btnToggleLight.addEventListener('click', () => {
+        const lightSwitch = new Audio('sounds/light-switch.mp3');
+        lightSwitch.play();
+        lightSwitch.volume = 0.5; // Set volume to 50%
+
         lightIsOn = !lightIsOn;
         lightBulbIcon.classList.toggle('text-warning', lightIsOn); // Yellow when on
         lightBulbIcon.classList.toggle('text-dark', !lightIsOn); // Dark when off
@@ -1354,13 +1407,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let doorIsOpen = false; // Track door state
     let doorSchedule = { openTime: null, closeTime: null }; // Track schedule
 
-    // Toggle Door
-    btnToggleDoor.addEventListener('click', () => {
-        doorIsOpen = !doorIsOpen;
-        doorStatusElement.textContent = doorIsOpen ? 'Open' : 'Closed';
-        btnToggleDoor.textContent = doorIsOpen ? 'Close Door' : 'Open Door';
-    });
-
     // Set Door Schedule
     btnSetDoorSchedule.addEventListener('click', () => {
         const openTime = doorOpenTimeInput.value;
@@ -1401,4 +1447,110 @@ document.addEventListener('DOMContentLoaded', () => {
             btnToggleDoor.textContent = 'Open Door';
         }
     }, 60000); // Check every minute
+});
+
+// Function to update all temperature displays
+function updateDashboardTemperatures(unit) {
+    // Helper function to convert between units
+    function convertTemperature(value, toUnit) {
+        if (toUnit === 'Fahrenheit') {
+            return (value * 9/5) + 32;
+        } else {
+            return (value - 32) * 5/9;
+        }
+    }
+
+    // Update main temperature display
+    const temperatureDisplay = document.getElementById('temperature');
+    if (temperatureDisplay) {
+        const currentTemp = parseFloat(temperatureDisplay.textContent);
+        if (!isNaN(currentTemp)) {
+            const currentUnit = temperatureDisplay.textContent.includes('F') ? 'Fahrenheit' : 'Celsius';
+            if (currentUnit !== unit) {
+                const convertedTemp = convertTemperature(currentTemp, unit);
+                temperatureDisplay.textContent = `${convertedTemp.toFixed(1)} °${unit.charAt(0)}`;
+            }
+        }
+    }
+
+    // Update environment chart
+    const environmentChart = Chart.getChart('environmentChart');
+    if (environmentChart) {
+        const dataset = environmentChart.data.datasets[0];
+        dataset.label = `Temperature (°${unit.charAt(0)})`;
+        
+        // Convert all temperature values in the chart
+        const currentUnit = dataset.label.includes('F') ? 'Fahrenheit' : 'Celsius';
+        if (currentUnit !== unit) {
+            dataset.data = dataset.data.map(value => 
+                convertTemperature(value, unit)
+            );
+        }
+        environmentChart.update();
+    }
+
+    // Update threshold displays
+    const heaterThreshold = document.getElementById('autoHeaterThreshold');
+    const fanThreshold = document.getElementById('autoFanThreshold');
+
+    if (heaterThreshold) {
+        const currentValue = parseFloat(heaterThreshold.value);
+        if (!isNaN(currentValue)) {
+            const convertedValue = convertTemperature(currentValue, unit);
+            heaterThreshold.value = convertedValue.toFixed(1);
+        }
+    }
+
+    if (fanThreshold) {
+        const currentValue = parseFloat(fanThreshold.value);
+        if (!isNaN(currentValue)) {
+            const convertedValue = convertTemperature(currentValue, unit);
+            fanThreshold.value = convertedValue.toFixed(1);
+        }
+    }
+}
+
+// When user checks the checkbox chkTemperatureUnit, it should change the 
+// temperature unit from Celsius to Fahrenheit and vice versa
+// It should also update the temperature unit using api handler settingsApiHandler
+// do it
+
+document.getElementById('chkTemperatureUnit').addEventListener('change', async (event) => {
+    const isChecked = event.target.checked;
+    const temperatureUnit = isChecked ? 'Fahrenheit' : 'Celsius';
+
+    // Get the SessionID from localStorage
+    const sessionID = localStorage.getItem('SessionID');
+    if (!sessionID) {
+        console.error('No SessionID found. Please log in again.');
+        return;
+    }
+
+    try {
+        // Update the temperature unit setting using settingsApiHandler
+        await settingsApiHandler('PUT', {
+            SessionID: sessionID,
+            setting: 'temperatureUnit',
+            value: temperatureUnit,
+        });
+
+        // Save the setting in localStorage
+        localStorage.setItem('temperatureUnit', temperatureUnit);
+
+        // Update all temperature displays on the dashboard
+        updateDashboardTemperatures(temperatureUnit);
+
+        // enable the save settings button
+        const btnSaveSettings = document.getElementById('btnSaveSettings');
+        if (btnSaveSettings) {
+            btnSaveSettings.disabled = false;
+        }
+    } catch (error) {
+        console.error('Error updating temperature unit:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'An error occurred while updating the temperature unit. Please try again later.',
+        });
+    }
 });
